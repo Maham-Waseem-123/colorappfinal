@@ -1,5 +1,5 @@
 # ============================================
-# STREAMLIT RESERVOIR ENGINEERING APP (THEMED FIXED)
+# STREAMLIT RESERVOIR ENGINEERING APP (THEMED FIXED WITH WHITE TEXT & GLASS SIDEBAR)
 # ============================================
 
 import streamlit as st
@@ -10,19 +10,65 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 import plotly.express as px
 
+# ============================================
+# BACKGROUND IMAGE & GLOBAL STYLING
+# ============================================
 
 page_bg_img = """
 <style>
+/* Full background image */
 [data-testid="stAppViewContainer"] {
   background: url("https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/patrick-hendry-6xeDIZgoPaw-unsplash.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
 }
+
+/* Make all text white */
+body, .block-container, .stText, .stMarkdown, .stDataFrame, .stButton, .stSlider {
+    color: white !important;
+    font-family: "Segoe UI", sans-serif;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5 {
+    color: #ffffff !important;
+}
+
+/* Sidebar as glass/transparent */
+.css-1d391kg { 
+    background-color: rgba(0, 0, 0, 0.4) !important; 
+    backdrop-filter: blur(10px); 
+    color: white !important;
+}
+
+/* Buttons */
+div.stButton > button {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+div.stButton > button:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Plotly chart background */
+.stPlotlyChart { 
+    background-color: rgba(0,0,0,0.3); 
+    border-radius: 15px; 
+    padding: 10px; 
+}
+
+/* Sliders text color */
+div.stSlider > div { color: white; }
+
+/* Dataframe text color */
+.stDataFrame div.row_widget { background-color: rgba(255, 255, 255, 0.1); color: white; }
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
-
 
 # ============================================
 # 1. LOAD DATA
@@ -71,23 +117,10 @@ def train_model(df):
 model, scaler, feature_cols, numeric_cols = train_model(df)
 
 # ============================================
-# 3. STREAMLIT APP CONFIG & THEME
+# 3. STREAMLIT PAGE CONFIG
 # ============================================
 
 st.set_page_config(page_title="Reservoir Engineering App", layout="wide")
-
-st.markdown("""
-<style>
-body, .block-container { background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1581091215367-8bbf6eb7b9f0') no-repeat center center fixed; background-size: cover; color: #fff; font-family: "Segoe UI", sans-serif; }
-h1, h2, h3 { color: #ffd700 !important; }
-.css-1d391kg, .sidebar .sidebar-content { background-color: rgba(0,0,0,0.7); color: #fff; }
-div.stSlider > div { color: #fff; }
-div.stButton > button { background-color: #eeff00; color: black; font-weight: bold; border-radius: 8px; border: none; }
-div.stButton > button:hover { background-color: #ffff66; color: black; }
-.stPlotlyChart { background-color: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
-.stDataFrame div.row_widget { background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; }
-</style>
-""", unsafe_allow_html=True)
 
 # ============================================
 # Sidebar Navigation
@@ -204,7 +237,6 @@ elif page == "Reservoir Prediction":
 
 elif page == "Economic Analysis":
     st.markdown("<h1 style='text-align:center;'>Economic Analysis</h1>", unsafe_allow_html=True)
-
     st.subheader("Adjust Cost Parameters")
     base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
     base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
