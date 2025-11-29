@@ -109,52 +109,6 @@ page = st.sidebar.radio("Select a Page:", [
 ])
 
 # ============================================
-# Helper function: binned line plot
-# ============================================
-
-def make_binned_lineplot(xcol, bins=10):
-    # Create bins
-    df['bin'] = pd.cut(df[xcol], bins=bins, duplicates='drop')
-
-    # Group by bin and calculate mean Production
-    binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
-
-    # Keep only bins with valid numeric midpoint
-    binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid if x is not None else np.nan)
-    binned_df = binned_df.dropna(subset=['bin_center', 'Production (MMcfge)'])
-    binned_df = binned_df.sort_values("bin_center")
-
-    # Plot
-    fig = px.line(
-        binned_df,
-        x='bin_center',
-        y='Production (MMcfge)',
-        labels={'bin_center': xcol, 'Production (MMcfge)': 'Production (MMcfge)'},
-        markers=True
-    )
-    fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=8))
-
-    fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-        title_font=dict(color='#ffd700', size=20),
-        xaxis=dict(showgrid=False, title=dict(font=dict(color='white', size=14, family="Segoe UI")),
-                   tickfont=dict(color='white', size=12, family="Segoe UI")),
-        yaxis=dict(showgrid=False, title=dict(font=dict(color='white', size=14, family="Segoe UI")),
-                   tickfont=dict(color='white', size=12, family="Segoe UI"))
-    )
-
-    # Safe x-axis range
-    if len(binned_df) > 1:
-        fig.update_xaxes(range=[binned_df['bin_center'].min(), binned_df['bin_center'].max()],
-                         dtick=(binned_df['bin_center'].max() - binned_df['bin_center'].min())/bins)
-
-    st.subheader(f"Production vs {xcol}")
-    st.plotly_chart(fig, use_container_width=True)
-
-
-# ============================================
 # PAGE 1: RESERVOIR ENGINEERING DASHBOARD
 # ============================================
 
@@ -168,50 +122,62 @@ if page == "Reservoir Engineering Dashboard":
         "Proppant per foot (lbs)"
     ]
 
-    for col in features_to_plot:
-        make_binned_lineplot(col)
+    # Create 2 columns
+    col1, col2 = st.columns(2)
 
-    # Depth vs Production chart
+    for i, feature in enumerate(features_to_plot):
+        target_col = col1 if i % 2 == 0 else col2
+        # Safe binned line plot
+        df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
+        binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
+        binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid if x is not None else np.nan)
+        binned_df = binned_df.dropna(subset=['bin_center', 'Production (MMcfge)'])
+        binned_df = binned_df.sort_values('bin_center')
+
+        fig = px.line(
+            binned_df,
+            x='bin_center',
+            y='Production (MMcfge)',
+            labels={'bin_center': feature, 'Production (MMcfge)': 'Production (MMcfge)'},
+            markers=True
+        )
+        fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=6))
+        fig.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white'),
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=False)
+        )
+
+        target_col.subheader(f"{feature} vs Production")
+        target_col.plotly_chart(fig, use_container_width=True)
+
+    # Depth vs Production chart (full width)
     st.subheader("Depth (feet) vs Production")
-    df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10)
+    df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10, duplicates='drop')
     binned_depth_df = df.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
-    binned_depth_df['bin_center'] = binned_depth_df['Depth_bin'].apply(lambda x: x.mid)
-    binned_depth_df = binned_depth_df.dropna(subset=['Production (MMcfge)'])
-    binned_depth_df = binned_depth_df.sort_values("bin_center")
+    binned_depth_df['bin_center'] = binned_depth_df['Depth_bin'].apply(lambda x: x.mid if x is not None else np.nan)
+    binned_depth_df = binned_depth_df.dropna(subset=['bin_center', 'Production (MMcfge)'])
+    binned_depth_df = binned_depth_df.sort_values('bin_center')
 
-    fig = px.line(
+    fig_depth = px.line(
         binned_depth_df,
         x='bin_center',
         y='Production (MMcfge)',
         labels={'bin_center': 'Depth (feet)', 'Production (MMcfge)': 'Production (MMcfge)'},
         markers=True
     )
-
-    fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow'))
-
-    fig.update_layout(
+    fig_depth.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow'))
+    fig_depth.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white'),
-        title_font=dict(color='#ffd700', size=20),
-        xaxis=dict(
-            showgrid=False,
-            title=dict(font=dict(color='white', size=14, family="Segoe UI")),
-            tickfont=dict(color='white', size=12, family="Segoe UI")
-        ),
-        yaxis=dict(
-            showgrid=False,
-            title=dict(font=dict(color='white', size=14, family="Segoe UI")),
-            tickfont=dict(color='white', size=12, family="Segoe UI")
-        )
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=False)
     )
 
-    fig.update_xaxes(
-        range=[binned_depth_df['bin_center'].min(), binned_depth_df['bin_center'].max()],
-        dtick=(binned_depth_df['bin_center'].max() - binned_depth_df['bin_center'].min())/10
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_depth, use_container_width=True)
 
 # ============================================
 # PAGE 2: RESERVOIR PREDICTION
