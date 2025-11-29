@@ -10,6 +10,20 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 import plotly.express as px
 
+
+page_bg_img = """
+<style>
+[data-testid="stAppViewContainer"] {
+  background: url("https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/patrick-hendry-6xeDIZgoPaw-unsplash.jpg");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+</style>
+"""
+st.markdown(page_bg_img, unsafe_allow_html=True)
+
+
 # ============================================
 # 1. LOAD DATA
 # ============================================
