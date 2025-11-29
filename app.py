@@ -325,151 +325,81 @@ elif page == "Reservoir Prediction":
             st.markdown(f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>", unsafe_allow_html=True)
 
 # ============================================
-# 7. ECONOMIC ANALYSIS PAGE (THEMED + GLASS UI)
+# PAGE 3: ECONOMIC ANALYSIS (RESTORED ORIGINAL WITH SLIDERS)
 # ============================================
 
 elif page == "Economic Analysis":
+    
+    st.title("Economic Analysis")
 
-    st.markdown("<h1 style='text-align:center;'>💰 Economic Analysis</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:white; font-weight:bold;'>Adjust economic parameters to compute profitability</p>", unsafe_allow_html=True)
+    # -----------------------------
+    # COST PARAMETERS (SLIDERS)
+    # -----------------------------
+    st.subheader("Adjust Cost Parameters")
 
-    # --------------------------
-    # COST INPUT GLASS CARD
-    # --------------------------
-    st.markdown("<div class='glass-card'><h3>🛠️ Adjust Cost Parameters</h3></div>", unsafe_allow_html=True)
+    base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
+    base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
 
-    col1, col2 = st.columns(2)
+    proppant_cost_per_lb = st.slider("Proppant Cost ($/lb)", 0.01, 1.0, 0.10)
+    water_cost_per_bbl = st.slider("Water Cost ($/bbl)", 0.5, 5.0, 1.5)
+    additive_cost_per_bbl = st.slider("Additive Cost ($/bbl)", 0.5, 5.0, 2.0)
 
-    with col1:
-        base_drilling_cost = st.segmented_control(
-            "Base Drilling Cost ($/ft)",
-            options=[500, 1500, 3000, 5000],
-            default=1500
-        )
+    base_maintenance_cost = st.slider("Maintenance Cost ($/year)", 10000, 100000, 30000)
+    base_pump_cost = st.slider("Pump/Energy Cost ($/year)", 10000, 50000, 20000)
 
-        base_completion_cost = st.segmented_control(
-            "Base Completion Cost ($/ft)",
-            options=[200, 800, 1500, 2000],
-            default=800
-        )
+    gas_price = st.slider("Gas Price ($/MMcfge)", 1, 20, 5)
 
-        proppant_cost = st.segmented_control(
-            "Proppant Cost ($/lb)",
-            options=[0.01, 0.25, 0.50, 1.00],
-            default=0.25,
-            format_func=lambda x: f"${x:.2f}"
-        )
-
-        water_cost = st.segmented_control(
-            "Water Cost ($/bbl)",
-            options=[0.50, 1.50, 3.00, 5.00],
-            default=1.50,
-            format_func=lambda x: f"${x:.2f}"
-        )
-
-    with col2:
-        additive_cost = st.segmented_control(
-            "Additive Cost ($/bbl)",
-            options=[0.50, 1.50, 3.00, 5.00],
-            default=1.50,
-            format_func=lambda x: f"${x:.2f}"
-        )
-
-        maintenance_cost = st.segmented_control(
-            "Maintenance Cost ($/year)",
-            options=[10000, 40000, 70000, 100000],
-            default=40000
-        )
-
-        pump_energy_cost = st.segmented_control(
-            "Pump/Energy Cost ($/year)",
-            options=[10000, 25000, 40000, 50000],
-            default=25000
-        )
-
-        gas_price = st.segmented_control(
-            "Gas Price ($/MMcfge)",
-            options=[1.00, 2.50, 4.00, 6.00],
-            default=2.50,
-            format_func=lambda x: f"${x:.2f}"
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.divider()
-
-    # --------------------------
-    # WELL PARAMETERS GLASS CARD
-    # --------------------------
-    st.markdown("<div class='glass-card'><h3>🛢️ Well Parameters</h3></div>", unsafe_allow_html=True)
-
-    colA, colB = st.columns(2)
-
-    with colA:
-        lateral_length = st.number_input("Lateral Length (ft)", min_value=1000, max_value=15000, value=5000)
-        proppant_per_ft = st.number_input("Proppant per foot (lbs/ft)", min_value=200, max_value=3000, value=1200)
-        water_per_ft = st.number_input("Water per foot (bbl/ft)", min_value=5, max_value=100, value=30)
-
-    with colB:
-        additive_per_ft = st.number_input("Additive per foot (bbl/ft)", min_value=0, max_value=20, value=5)
-
-        # Load prediction from previous page automatically
-        predicted_production = st.number_input(
-            "Predicted Gas Production (MMcfge)",
-            min_value=0.0,
-            value=float(st.session_state.get("predicted_production", 3.5))
-        )
-
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.divider()
-
-    # --------------------------
-    # ECONOMIC CALCULATIONS
-    # --------------------------
-
-    drilling_cost_total = base_drilling_cost * lateral_length
-    completion_cost_total = base_completion_cost * lateral_length
-
-    proppant_total = proppant_cost * proppant_per_ft * lateral_length
-    water_total = water_cost * water_per_ft * lateral_length
-    additive_total = additive_cost * additive_per_ft * lateral_length
-
-    annual_opex = maintenance_cost + pump_energy_cost
-
-    gross_revenue = predicted_production * gas_price * 1000
-
-    total_capex = drilling_cost_total + completion_cost_total + water_total + proppant_total + additive_total
-
-    net_cashflow = gross_revenue - annual_opex - total_capex
-
-    breakeven_price = (annual_opex + total_capex) / max(predicted_production, 0.0001)
-
-    # --------------------------
-    # RESULTS IN GLASS CARDS
-    # --------------------------
-
-    st.markdown("<div class='glass-card'><h3>📊 Economic Summary</h3></div>", unsafe_allow_html=True)
-
-    colR1, colR2, colR3 = st.columns(3)
-
-    colR1.metric("Total CAPEX", f"${total_capex:,.0f}")
-    colR2.metric("Annual OPEX", f"${annual_opex:,.0f}")
-    colR3.metric("Gross Revenue", f"${gross_revenue:,.0f}")
-
-    st.divider()
-
-    colR4, colR5 = st.columns(2)
-
-    colR4.metric(
-        "Net Cashflow",
-        f"${net_cashflow:,.0f}",
-        delta="Positive" if net_cashflow > 0 else "Negative",
-        delta_color="normal"
+    # -----------------------------
+    # ECONOMIC CALC FOR EXISTING WELLS
+    # -----------------------------
+    df["CAPEX"] = (
+        base_drilling_cost * df["Depth (feet)"] +
+        base_completion_cost * df["Gross Perforated Interval (ft)"] +
+        proppant_cost_per_lb * df["Proppant per foot (lbs)"] * df["Gross Perforated Interval (ft)"] +
+        water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
+        additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
     )
-
-    colR5.metric(
-        "Breakeven Gas Price",
-        f"${breakeven_price:,.2f} / MMcfge"
+    
+    df["OPEX"] = (
+        base_maintenance_cost +
+        base_pump_cost +
+        proppant_cost_per_lb * df["Proppant per foot (lbs)"] * df["Gross Perforated Interval (ft)"] +
+        water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
+        additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
     )
+    
+    df["Revenue"] = df["Production (MMcfge)"] * gas_price
+    df["Profit"] = df["Revenue"] - df["CAPEX"] - df["OPEX"]
 
-    st.success("Economic analysis calculation completed successfully.")
+    # -----------------------------
+    # DISPLAY EXISTING WELLS ECONOMICS
+    # -----------------------------
+    st.subheader("Economic Metrics of Existing Wells")
+    st.dataframe(df[['ID', 'CAPEX', 'OPEX', 'Revenue', 'Profit']])
 
+    # -----------------------------
+    # ECONOMIC ANALYSIS FOR PREDICTED WELL
+    # -----------------------------
+    if "predicted_production" in st.session_state:
+        st.subheader("Economic Metrics for Predicted Well")
+
+        P = st.session_state.predicted_production
+
+        new_capex = (
+            base_drilling_cost * df["Depth (feet)"].mean() +
+            base_completion_cost * df["Gross Perforated Interval (ft)"].mean() +
+            proppant_cost_per_lb * df["Proppant per foot (lbs)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
+            water_cost_per_bbl * df["Water per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
+            additive_cost_per_bbl * df["Additive per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean()
+        )
+
+        new_opex = base_maintenance_cost + base_pump_cost
+
+        new_revenue = P * gas_price
+        new_profit = new_revenue - new_capex - new_opex
+        
+        st.write(f"Predicted Production: **{P:.2f} MMcfge**")
+        st.write(f"CAPEX: **${new_capex:,.2f}**")
+        st.write(f"OPEX: **${new_opex:,.2f}**")
+        st.write(f"Revenue: **${new_revenue:,.2f}**")
+        st.write(f"Profit: **${new_profit:,.2f}**")
