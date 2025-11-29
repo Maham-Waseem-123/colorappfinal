@@ -360,10 +360,12 @@ elif page == "Economic Analysis":
         additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
     )
     
-    # Only fixed OPEX
+    # OPEX now only fixed costs
     df["OPEX"] = base_maintenance_cost + base_pump_cost
     
-    df["Revenue"] = df["Production (MMcfge)"] * gas_price
+    # Revenue scaled properly to match CAPEX
+    df["Revenue"] = df["Production (MMcfge)"] * 1_000_000 * gas_price
+    
     df["Profit"] = df["Revenue"] - df["CAPEX"] - df["OPEX"]
 
     # -----------------------------
@@ -389,7 +391,7 @@ elif page == "Economic Analysis":
         )
 
         new_opex = base_maintenance_cost + base_pump_cost
-        new_revenue = P * gas_price
+        new_revenue = P * 1_000_000 * gas_price
         new_profit = new_revenue - new_capex - new_opex
         
         st.write(f"Predicted Production: **{P:.2f} MMcfge**")
