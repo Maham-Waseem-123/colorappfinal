@@ -350,21 +350,48 @@ elif page == "Economic Analysis":
     gas_price = st.slider("Gas Price ($/MMcfge)", 1, 20, 5)
 
     # -----------------------------
-    # CALCULATE REVENUE FOR EXISTING WELLS
+    # CALCULATE CAPEX & OPEX FOR EXISTING WELLS
     # -----------------------------
-    df["Revenue"] = df["Production (MMcfge)"] * 1_000_000 * gas_price
+    df["CAPEX"] = (
+        base_drilling_cost * df["Depth (feet)"] +
+        base_completion_cost * df["Gross Perforated Interval (ft)"] +
+        proppant_cost_per_lb * df["Proppant per foot (lbs)"] * df["Gross Perforated Interval (ft)"] +
+        water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
+        additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
+    )
 
-    st.subheader("Revenue of Existing Wells")
-    st.dataframe(df[['ID', 'Revenue']])
+    # Only fixed OPEX
+    df["OPEX"] = base_maintenance_cost + base_pump_cost
+
+    # Revenue
+    df["Revenue"] = df["Production (MMcfge)"] * gas_price
 
     # -----------------------------
-    # REVENUE FOR PREDICTED WELL
+    # DISPLAY EXISTING WELLS ECONOMICS
+    # -----------------------------
+    st.subheader("Economic Metrics of Existing Wells")
+    st.dataframe(df[['ID', 'CAPEX', 'OPEX', 'Revenue']])
+
+    # -----------------------------
+    # ECONOMIC METRICS FOR PREDICTED WELL
     # -----------------------------
     if "predicted_production" in st.session_state:
-        st.subheader("Revenue for Predicted Well")
+        st.subheader("Economic Metrics for Predicted Well")
 
         P = st.session_state.predicted_production
-        new_revenue = P * 1_000_000 * gas_price
+
+        new_capex = (
+            base_drilling_cost * df["Depth (feet)"].mean() +
+            base_completion_cost * df["Gross Perforated Interval (ft)"].mean() +
+            proppant_cost_per_lb * df["Proppant per foot (lbs)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
+            water_cost_per_bbl * df["Water per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
+            additive_cost_per_bbl * df["Additive per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean()
+        )
+
+        new_opex = base_maintenance_cost + base_pump_cost
+        new_revenue = P * gas_price
         
         st.write(f"Predicted Production: **{P:.2f} MMcfge**")
+        st.write(f"CAPEX: **${new_capex:,.2f}**")
+        st.write(f"OPEX: **${new_opex:,.2f}**")
         st.write(f"Revenue: **${new_revenue:,.2f}**")
