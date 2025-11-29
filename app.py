@@ -1,5 +1,5 @@
 # ============================================
-# STREAMLIT RESERVOIR ENGINEERING APP (THEMED)
+# STREAMLIT RESERVOIR ENGINEERING APP (THEMED FIXED)
 # ============================================
 
 import streamlit as st
@@ -20,6 +20,7 @@ def load_data():
     df = pd.read_csv(url)
     df.columns = df.columns.str.strip().str.replace("\n", "").str.replace("\xa0", "")
     df = df.apply(pd.to_numeric, errors='coerce')
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.fillna(df.mean(), inplace=True)
     return df
 
@@ -56,64 +57,21 @@ def train_model(df):
 model, scaler, feature_cols, numeric_cols = train_model(df)
 
 # ============================================
-# 3. STREAMLIT APP CONFIG
+# 3. STREAMLIT APP CONFIG & THEME
 # ============================================
 
 st.set_page_config(page_title="Reservoir Engineering App", layout="wide")
 
-# Inject custom CSS for theme
 st.markdown("""
 <style>
-/* Global */
-body, .block-container {
-    background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1581091215367-8bbf6eb7b9f0') no-repeat center center fixed;
-    background-size: cover;
-    color: #fff;
-    font-family: "Segoe UI", sans-serif;
-}
-
-/* Hero section */
-h1, h2, h3 {
-    color: #ffd700 !important;
-}
-
-/* Sidebar */
-.css-1d391kg, .sidebar .sidebar-content {
-    background-color: rgba(0,0,0,0.7);
-    color: #fff;
-}
-
-/* Sliders */
-div.stSlider > div {
-    color: #fff;
-}
-
-/* Buttons */
-div.stButton > button {
-    background-color: #eeff00;
-    color: black;
-    font-weight: bold;
-    border-radius: 8px;
-    border: none;
-}
-div.stButton > button:hover {
-    background-color: #ffff66;
-    color: black;
-}
-
-/* Plotly charts */
-.stPlotlyChart {
-    background-color: rgba(0,0,0,0.3);
-    border-radius: 15px;
-    padding: 10px;
-}
-
-/* Dataframe */
-.stDataFrame div.row_widget {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    color: white;
-}
+body, .block-container { background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1581091215367-8bbf6eb7b9f0') no-repeat center center fixed; background-size: cover; color: #fff; font-family: "Segoe UI", sans-serif; }
+h1, h2, h3 { color: #ffd700 !important; }
+.css-1d391kg, .sidebar .sidebar-content { background-color: rgba(0,0,0,0.7); color: #fff; }
+div.stSlider > div { color: #fff; }
+div.stButton > button { background-color: #eeff00; color: black; font-weight: bold; border-radius: 8px; border: none; }
+div.stButton > button:hover { background-color: #ffff66; color: black; }
+.stPlotlyChart { background-color: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
+.stDataFrame div.row_widget { background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -133,13 +91,7 @@ page = st.sidebar.radio("Select a Page:", [
 # ============================================
 
 if page == "Reservoir Engineering Dashboard":
-    
-    st.markdown("""
-    <div style='text-align:center; padding:50px 10px;'>
-        <h1 style='font-weight:bold;'>Reservoir Engineering Dashboard</h1>
-        <p style='font-size:1.2rem; color:white;'>Analyze your well production with advanced visualizations</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1>", unsafe_allow_html=True)
 
     features_to_plot = [
         "Porosity",
@@ -162,14 +114,12 @@ if page == "Reservoir Engineering Dashboard":
             labels={'bin_center': xcol, 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True
         )
-
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white'),
             title_font=dict(color='#ffd700', size=20)
         )
-
         fig.update_xaxes(
             range=[binned_df['bin_center'].min(), binned_df['bin_center'].max()],
             dtick=(binned_df['bin_center'].max() - binned_df['bin_center'].min())/bins
@@ -219,18 +169,19 @@ elif page == "Reservoir Prediction":
 
     input_data = {}
     for col in feature_cols:
-        min_val, max_val = float(df[col].min()), float(df[col].max())
-        mean_val = float(df[col].mean())
+        col_values = df[col].dropna()
+        min_val = float(col_values.min())
+        max_val = float(col_values.max())
+        mean_val = float(col_values.mean())
+        if min_val == max_val:
+            max_val = min_val + 1.0  # fix for slider crash
         input_data[col] = st.slider(col, min_val, max_val, mean_val, key=col)
 
     if st.button("Predict Production"):
         input_df = pd.DataFrame([input_data])
         input_df[numeric_cols] = scaler.transform(input_df[numeric_cols])
         pred = model.predict(input_df)[0]
-        st.markdown(
-            f"<h2 style='color:#eeff00; text-align:center;'>Predicted Production: {pred:.2f} MMcfge</h2>",
-            unsafe_allow_html=True
-        )
+        st.markdown(f"<h2 style='color:#eeff00; text-align:center;'>Predicted Production: {pred:.2f} MMcfge</h2>", unsafe_allow_html=True)
         st.session_state.predicted_production = pred
 
 # ============================================
@@ -239,7 +190,7 @@ elif page == "Reservoir Prediction":
 
 elif page == "Economic Analysis":
     st.markdown("<h1 style='text-align:center;'>Economic Analysis</h1>", unsafe_allow_html=True)
-    
+
     st.subheader("Adjust Cost Parameters")
     base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
     base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
