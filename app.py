@@ -325,202 +325,151 @@ elif page == "Reservoir Prediction":
             st.markdown(f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>", unsafe_allow_html=True)
 
 # ============================================
-# ECONOMIC ANALYSIS PAGE
+# 7. ECONOMIC ANALYSIS PAGE (THEMED + GLASS UI)
 # ============================================
+
 elif page == "Economic Analysis":
-    st.markdown("<div class='glass-card'><h1 style='text-align:center;'>Economic Analysis</h1></div>", unsafe_allow_html=True)
-    st.markdown("<div class='glass-card'><h3 style='margin-bottom:8px;'>🛠️ Adjust Cost Parameters</h3>", unsafe_allow_html=True)
+
+    st.markdown("<h1 style='text-align:center;'>💰 Economic Analysis</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:white; font-weight:bold;'>Adjust economic parameters to compute profitability</p>", unsafe_allow_html=True)
+
+    # --------------------------
+    # COST INPUT GLASS CARD
+    # --------------------------
+    st.markdown("<div class='glass-card'><h3>🛠️ Adjust Cost Parameters</h3></div>", unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
 
-    # --------------------------
-    # COST INPUTS (SEGMENTED CONTROLS)
-    # --------------------------
     with col1:
-        # segmented_control may not exist on older Streamlit; we assume it's available
-        try:
-            base_drilling_cost = st.segmented_control(
-                "Base Drilling Cost ($/ft)",
-                options=[500, 1500, 3000, 5000],
-                default=1500,
-                key="seg_base_drill"
-            )
-            base_completion_cost = st.segmented_control(
-                "Base Completion Cost ($/ft)",
-                options=[200, 800, 1500, 2000],
-                default=800,
-                key="seg_base_comp"
-            )
-            proppant_cost = st.segmented_control(
-                "Proppant Cost ($/lb)",
-                options=[0.01, 0.25, 0.50, 1.00],
-                default=0.25,
-                format_func=lambda x: f"${x:.2f}",
-                key="seg_proppant"
-            )
-            water_cost = st.segmented_control(
-                "Water Cost ($/bbl)",
-                options=[0.50, 1.50, 3.00, 5.00],
-                default=1.50,
-                format_func=lambda x: f"${x:.2f}",
-                key="seg_water"
-            )
-        except Exception:
-            # Fallback to number_input if segmented_control isn't available
-            base_drilling_cost = st.number_input("Base Drilling Cost ($/ft)", min_value=500, max_value=5000, value=1500, step=50)
-            base_completion_cost = st.number_input("Base Completion Cost ($/ft)", min_value=200, max_value=2000, value=800, step=50)
-            proppant_cost = st.number_input("Proppant Cost ($/lb)", min_value=0.01, max_value=1.0, value=0.25, step=0.01, format="%.2f")
-            water_cost = st.number_input("Water Cost ($/bbl)", min_value=0.5, max_value=5.0, value=1.5, step=0.1, format="%.2f")
+        base_drilling_cost = st.segmented_control(
+            "Base Drilling Cost ($/ft)",
+            options=[500, 1500, 3000, 5000],
+            default=1500
+        )
+
+        base_completion_cost = st.segmented_control(
+            "Base Completion Cost ($/ft)",
+            options=[200, 800, 1500, 2000],
+            default=800
+        )
+
+        proppant_cost = st.segmented_control(
+            "Proppant Cost ($/lb)",
+            options=[0.01, 0.25, 0.50, 1.00],
+            default=0.25,
+            format_func=lambda x: f"${x:.2f}"
+        )
+
+        water_cost = st.segmented_control(
+            "Water Cost ($/bbl)",
+            options=[0.50, 1.50, 3.00, 5.00],
+            default=1.50,
+            format_func=lambda x: f"${x:.2f}"
+        )
 
     with col2:
-        try:
-            additive_cost = st.segmented_control(
-                "Additive Cost ($/bbl)",
-                options=[0.50, 1.50, 3.00, 5.00],
-                default=1.50,
-                format_func=lambda x: f"${x:.2f}",
-                key="seg_add"
-            )
-            maintenance_cost = st.segmented_control(
-                "Maintenance Cost ($/year)",
-                options=[10000, 40000, 70000, 100000],
-                default=40000,
-                key="seg_maint"
-            )
-            pump_energy_cost = st.segmented_control(
-                "Pump/Energy Cost ($/year)",
-                options=[10000, 25000, 40000, 50000],
-                default=25000,
-                key="seg_pump"
-            )
-            gas_price = st.segmented_control(
-                "Gas Price ($/MMcfge)",
-                options=[1.00, 2.50, 4.00, 6.00],
-                default=2.50,
-                format_func=lambda x: f"${x:.2f}",
-                key="seg_gas"
-            )
-        except Exception:
-            additive_cost = st.number_input("Additive Cost ($/bbl)", min_value=0.5, max_value=5.0, value=1.5, step=0.1, format="%.2f")
-            maintenance_cost = st.number_input("Maintenance Cost ($/year)", min_value=10000, max_value=100000, value=40000, step=1000)
-            pump_energy_cost = st.number_input("Pump/Energy Cost ($/year)", min_value=10000, max_value=50000, value=25000, step=1000)
-            gas_price = st.number_input("Gas Price ($/MMcfge)", min_value=0.01, max_value=100.0, value=2.5, step=0.1, format="%.2f")
+        additive_cost = st.segmented_control(
+            "Additive Cost ($/bbl)",
+            options=[0.50, 1.50, 3.00, 5.00],
+            default=1.50,
+            format_func=lambda x: f"${x:.2f}"
+        )
 
-    st.markdown("</div>", unsafe_allow_html=True)  # close Adjust Cost Parameters glass-card
+        maintenance_cost = st.segmented_control(
+            "Maintenance Cost ($/year)",
+            options=[10000, 40000, 70000, 100000],
+            default=40000
+        )
 
-    st.markdown("<div class='glass-card'><h3>🛢️ Well Parameters</h3>", unsafe_allow_html=True)
-    # --------------------------
-    # WELL PARAMETERS (NUMBER INPUTS styled as white)
-    # --------------------------
-    colA, colB = st.columns(2)
-    with colA:
-        lateral_length = st.number_input("Lateral Length (ft)", min_value=1000, max_value=15000, value=5003, step=1, key="lat_len")
-        proppant_per_ft = st.number_input("Proppant per foot (lbs/ft)", min_value=200, max_value=3000, value=1200, step=1, key="prop_ft")
-        water_per_ft = st.number_input("Water per foot (bbl/ft)", min_value=1, max_value=200, value=30, step=1, key="water_ft")
-    with colB:
-        additive_per_ft = st.number_input("Additive per foot (bbl/ft)", min_value=0, max_value=50, value=5, step=1, key="add_ft")
-        # If prediction exists in session state use it as default in the number_input
-        pred_default = st.session_state.get("predicted_production", 3.5)
-        predicted_production = st.number_input("Predicted Gas Production (MMcfge)", min_value=0.0, value=float(pred_default), step=0.01, key="pred_gas")
+        pump_energy_cost = st.segmented_control(
+            "Pump/Energy Cost ($/year)",
+            options=[10000, 25000, 40000, 50000],
+            default=25000
+        )
 
-    st.markdown("</div>", unsafe_allow_html=True)  # close Well Parameters glass-card
+        gas_price = st.segmented_control(
+            "Gas Price ($/MMcfge)",
+            options=[1.00, 2.50, 4.00, 6.00],
+            default=2.50,
+            format_func=lambda x: f"${x:.2f}"
+        )
 
+    st.markdown("<br>", unsafe_allow_html=True)
     st.divider()
 
-    # ----------------------------------------------
-    # COST CALCULATIONS
-    # ----------------------------------------------
-    # Convert segmented_control options which may come as strings to numeric if needed
-    def to_float(v):
-        try:
-            return float(v)
-        except Exception:
-            return v
+    # --------------------------
+    # WELL PARAMETERS GLASS CARD
+    # --------------------------
+    st.markdown("<div class='glass-card'><h3>🛢️ Well Parameters</h3></div>", unsafe_allow_html=True)
 
-    base_drilling_cost = to_float(base_drilling_cost)
-    base_completion_cost = to_float(base_completion_cost)
-    proppant_cost = to_float(proppant_cost)
-    water_cost = to_float(water_cost)
-    additive_cost = to_float(additive_cost)
-    maintenance_cost = to_float(maintenance_cost)
-    pump_energy_cost = to_float(pump_energy_cost)
-    gas_price = to_float(gas_price)
-    predicted_production = float(predicted_production)
+    colA, colB = st.columns(2)
 
-    # Drilling + Completion totals
+    with colA:
+        lateral_length = st.number_input("Lateral Length (ft)", min_value=1000, max_value=15000, value=5000)
+        proppant_per_ft = st.number_input("Proppant per foot (lbs/ft)", min_value=200, max_value=3000, value=1200)
+        water_per_ft = st.number_input("Water per foot (bbl/ft)", min_value=5, max_value=100, value=30)
+
+    with colB:
+        additive_per_ft = st.number_input("Additive per foot (bbl/ft)", min_value=0, max_value=20, value=5)
+
+        # Load prediction from previous page automatically
+        predicted_production = st.number_input(
+            "Predicted Gas Production (MMcfge)",
+            min_value=0.0,
+            value=float(st.session_state.get("predicted_production", 3.5))
+        )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.divider()
+
+    # --------------------------
+    # ECONOMIC CALCULATIONS
+    # --------------------------
+
     drilling_cost_total = base_drilling_cost * lateral_length
     completion_cost_total = base_completion_cost * lateral_length
 
-    # Variable Costs (per-ft * length)
     proppant_total = proppant_cost * proppant_per_ft * lateral_length
     water_total = water_cost * water_per_ft * lateral_length
     additive_total = additive_cost * additive_per_ft * lateral_length
 
-    # Annual fixed OPEX
     annual_opex = maintenance_cost + pump_energy_cost
 
-    # Revenue -- be careful with units: keep consistent with earlier code
-    # Here we follow previous approach: predicted_production (MMcfge) * gas_price ($/MMcfge) * 1 (no extra multiplier)
-    gross_revenue = predicted_production * gas_price
+    gross_revenue = predicted_production * gas_price * 1000
 
-    # Total CAPEX
     total_capex = drilling_cost_total + completion_cost_total + water_total + proppant_total + additive_total
 
-    # Profitability
     net_cashflow = gross_revenue - annual_opex - total_capex
 
-    # Breakeven Price (per MMcfge)
-    breakeven_price = (annual_opex + total_capex) / max(predicted_production, 1e-6)
+    breakeven_price = (annual_opex + total_capex) / max(predicted_production, 0.0001)
 
-    # ----------------------------------------------
-    # RESULTS DISPLAY (GLASS METRIC CARDS)
-    # ----------------------------------------------
-    st.markdown("<div class='glass-card'><h3 style='margin-bottom:6px;'>📊 Economic Summary</h3></div>", unsafe_allow_html=True)
+    # --------------------------
+    # RESULTS IN GLASS CARDS
+    # --------------------------
 
-    # three metrics row
+    st.markdown("<div class='glass-card'><h3>📊 Economic Summary</h3></div>", unsafe_allow_html=True)
+
     colR1, colR2, colR3 = st.columns(3)
-    with colR1:
-        st.markdown(f"<div class='glass-card'><h4 style='margin:0;'>Total CAPEX</h4><h2 style='margin:6px 0; color:white;'>${total_capex:,.0f}</h2></div>", unsafe_allow_html=True)
-    with colR2:
-        st.markdown(f"<div class='glass-card'><h4 style='margin:0;'>Annual OPEX</h4><h2 style='margin:6px 0; color:white;'>${annual_opex:,.0f}</h2></div>", unsafe_allow_html=True)
-    with colR3:
-        st.markdown(f"<div class='glass-card'><h4 style='margin:0;'>Gross Revenue</h4><h2 style='margin:6px 0; color:white;'>${gross_revenue:,.0f}</h2></div>", unsafe_allow_html=True)
+
+    colR1.metric("Total CAPEX", f"${total_capex:,.0f}")
+    colR2.metric("Annual OPEX", f"${annual_opex:,.0f}")
+    colR3.metric("Gross Revenue", f"${gross_revenue:,.0f}")
 
     st.divider()
 
     colR4, colR5 = st.columns(2)
-    with colR4:
-        delta_label = "Positive" if net_cashflow > 0 else "Negative"
-        delta_color = "normal"
-        st.markdown(f"<div class='glass-card'><h4 style='margin:0;'>Net Cashflow</h4><h2 style='margin:6px 0; color:white;'>${net_cashflow:,.0f}</h2><div class='small-muted'>{delta_label}</div></div>", unsafe_allow_html=True)
-    with colR5:
-        st.markdown(f"<div class='glass-card'><h4 style='margin:0;'>Breakeven Gas Price</h4><h2 style='margin:6px 0; color:white;'>${breakeven_price:,.2f}/MMcfge</h2></div>", unsafe_allow_html=True)
 
-    # Success box (styled)
+    colR4.metric(
+        "Net Cashflow",
+        f"${net_cashflow:,.0f}",
+        delta="Positive" if net_cashflow > 0 else "Negative",
+        delta_color="normal"
+    )
+
+    colR5.metric(
+        "Breakeven Gas Price",
+        f"${breakeven_price:,.2f} / MMcfge"
+    )
+
     st.success("Economic analysis calculation completed successfully.")
 
-    # Optionally show a table summary (existing wells) if data has those columns
-    if set(["ID", "Production (MMcfge)"]).issubset(df.columns):
-        df_summary = df.copy()
-        # compute per-row CAPEX/OPEX/Revenue/Profit using selected costs (for demonstration)
-        df_summary["CAPEX"] = base_drilling_cost * df_summary.get("Depth (feet)", lateral_length) + \
-                              base_completion_cost * df_summary.get("Gross Perforated Interval (ft)", lateral_length) + \
-                              proppant_cost * df_summary.get("Proppant per foot (lbs)", proppant_per_ft) * df_summary.get("Gross Perforated Interval (ft)", lateral_length) + \
-                              water_cost * df_summary.get("Water per foot (bbls)", water_per_ft) * df_summary.get("Gross Perforated Interval (ft)", lateral_length) + \
-                              additive_cost * df_summary.get("Additive per foot (bbls)", additive_per_ft) * df_summary.get("Gross Perforated Interval (ft)", lateral_length)
-
-        df_summary["OPEX"] = annual_opex
-        df_summary["Revenue"] = df_summary["Production (MMcfge)"] * gas_price
-        df_summary["Profit"] = df_summary["Revenue"] - df_summary["CAPEX"] - df_summary["OPEX"]
-
-        st.markdown("<div class='glass-card'><h4>Economic Metrics of Existing Wells</h4></div>", unsafe_allow_html=True)
-        # show a subset for readability
-        cols_to_show = ["ID", "CAPEX", "OPEX", "Revenue", "Profit"]
-        for c in cols_to_show:
-            if c not in df_summary.columns:
-                df_summary[c] = np.nan
-        st.dataframe(df_summary[cols_to_show].head(50))
-
-# ============================================
-# END APP
-# ============================================
