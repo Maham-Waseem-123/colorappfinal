@@ -247,55 +247,148 @@ elif page == "Reservoir Prediction":
 # 7. ECONOMIC ANALYSIS PAGE
 # ============================================
 
-elif page == "Economic Analysis":
-    st.markdown("<h1 style='text-align:center;'>Economic Analysis</h1>", unsafe_allow_html=True)
-    st.subheader("Adjust Cost Parameters")
+# ----------------------------------------------
+# ECONOMIC ANALYSIS PAGE (FULL WORKING BLOCK)
+# ----------------------------------------------
 
-    # Sliders for costs
-    base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
-    base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
-    proppant_cost_per_lb = st.slider("Proppant Cost ($/lb)", 0.01, 1.0, 0.1)
-    water_cost_per_bbl = st.slider("Water Cost ($/bbl)", 0.5, 5.0, 1.5)
-    additive_cost_per_bbl = st.slider("Additive Cost ($/bbl)", 0.5, 5.0, 2.0)
-    base_maintenance_cost = st.slider("Maintenance Cost ($/year)", 10000, 100000, 30000)
-    base_pump_cost = st.slider("Pump/Energy Cost ($/year)", 10000, 50000, 20000)
-    gas_price = st.slider("Gas Price ($/MMcfge)", 1, 20, 5)
+import streamlit as st
+import pandas as pd
+import numpy as np
 
-    # Compute economic metrics
-    df["CAPEX"] = (
-        base_drilling_cost * df["Depth (feet)"] +
-        base_completion_cost * df["Gross Perforated Interval (ft)"] +
-        proppant_cost_per_lb * df["Proppant per foot (lbs)"] * df["Gross Perforated Interval (ft)"] +
-        water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
-        additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
+st.title("💰 Economic Analysis")
+
+st.markdown("### 🛠️ Adjust Cost Parameters")
+
+col1, col2 = st.columns(2)
+
+# --------------------------
+# COST INPUTS (SEGMENTED CONTROLS)
+# --------------------------
+
+with col1:
+    base_drilling_cost = st.segmented_control(
+        "Base Drilling Cost ($/ft)",
+        options=[500, 1500, 3000, 5000],
+        default=1500
     )
-    df["OPEX"] = base_maintenance_cost + base_pump_cost
-    df["Revenue"] = df["Production (MMcfge)"] * gas_price
-    df["Profit"] = df["Revenue"] - df["CAPEX"] - df["OPEX"]
 
-    st.subheader("Economic Metrics of Existing Wells")
-    st.dataframe(df[['ID', 'CAPEX', 'OPEX', 'Revenue', 'Profit']])
+    base_completion_cost = st.segmented_control(
+        "Base Completion Cost ($/ft)",
+        options=[200, 800, 1500, 2000],
+        default=800
+    )
 
-    # Predicted well metrics
-    if "predicted_production" in st.session_state:
-        P = st.session_state.predicted_production
-        new_capex = (
-            base_drilling_cost * df["Depth (feet)"].mean() +
-            base_completion_cost * df["Gross Perforated Interval (ft)"].mean() +
-            proppant_cost_per_lb * df["Proppant per foot (lbs)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
-            water_cost_per_bbl * df["Water per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
-            additive_cost_per_bbl * df["Additive per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean()
-        )
-        new_opex = base_maintenance_cost + base_pump_cost
-        new_revenue = P * gas_price
-        new_profit = new_revenue - new_capex - new_opex
+    proppant_cost = st.segmented_control(
+        "Proppant Cost ($/lb)",
+        options=[0.01, 0.25, 0.50, 1.00],
+        default=0.25,
+        format_func=lambda x: f"${x:.2f}"
+    )
 
-        st.markdown(f"""
-        <div class='glass-card' style='text-align:center;'>
-            <h3 style='color:#ffd700; font-weight:bold;'>Predicted Production: {P:.2f} MMcfge</h3>
-            <p style='color:white; font-weight:bold;'>CAPEX: ${new_capex:,.2f}</p>
-            <p style='color:white; font-weight:bold;'>OPEX: ${new_opex:,.2f}</p>
-            <p style='color:white; font-weight:bold;'>Revenue: ${new_revenue:,.2f}</p>
-            <p style='color:white; font-weight:bold;'>Profit: ${new_profit:,.2f}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    water_cost = st.segmented_control(
+        "Water Cost ($/bbl)",
+        options=[0.50, 1.50, 3.00, 5.00],
+        default=1.50,
+        format_func=lambda x: f"${x:.2f}"
+    )
+
+with col2:
+    additive_cost = st.segmented_control(
+        "Additive Cost ($/bbl)",
+        options=[0.50, 1.50, 3.00, 5.00],
+        default=1.50,
+        format_func=lambda x: f"${x:.2f}"
+    )
+
+    maintenance_cost = st.segmented_control(
+        "Maintenance Cost ($/year)",
+        options=[10000, 40000, 70000, 100000],
+        default=40000
+    )
+
+    pump_energy_cost = st.segmented_control(
+        "Pump/Energy Cost ($/year)",
+        options=[10000, 25000, 40000, 50000],
+        default=25000
+    )
+
+    gas_price = st.segmented_control(
+        "Gas Price ($/MMcfge)",
+        options=[1.00, 2.50, 4.00, 6.00],
+        default=2.50,
+        format_func=lambda x: f"${x:.2f}"
+    )
+
+st.divider()
+
+# ----------------------------------------------
+# USER WELL PARAMETERS
+# ----------------------------------------------
+
+st.markdown("### 🛢️ Well Parameters")
+
+colA, colB = st.columns(2)
+
+with colA:
+    lateral_length = st.number_input("Lateral Length (ft)", min_value=1000, max_value=15000, value=5000)
+    proppant_per_ft = st.number_input("Proppant per foot (lbs/ft)", min_value=200, max_value=3000, value=1200)
+    water_per_ft = st.number_input("Water per foot (bbl/ft)", min_value=5, max_value=100, value=30)
+
+with colB:
+    additive_per_ft = st.number_input("Additive per foot (bbl/ft)", min_value=0, max_value=20, value=5)
+    predicted_production = st.number_input("Predicted Gas Production (MMcfge)", min_value=0.0, value=3.5)
+
+st.divider()
+
+# ----------------------------------------------
+# COST CALCULATIONS
+# ----------------------------------------------
+
+# Drilling + Completion
+drilling_cost_total = base_drilling_cost * lateral_length
+completion_cost_total = base_completion_cost * lateral_length
+
+# Variable Costs
+proppant_total = proppant_cost * proppant_per_ft * lateral_length
+water_total = water_cost * water_per_ft * lateral_length
+additive_total = additive_cost * additive_per_ft * lateral_length
+
+# Annual fixed OPEX
+annual_opex = maintenance_cost + pump_energy_cost
+
+# Revenue
+gross_revenue = predicted_production * gas_price * 1000  # Converted to $ (1 MMcfge * gas price * 1000)
+
+# Total CAPEX
+total_capex = drilling_cost_total + completion_cost_total + water_total + proppant_total + additive_total
+
+# Profitability
+net_cashflow = gross_revenue - annual_opex - total_capex
+
+# Breakeven Price
+breakeven_price = (annual_opex + total_capex) / max(predicted_production, 0.0001)
+
+# ----------------------------------------------
+# RESULTS DISPLAY
+# ----------------------------------------------
+
+st.markdown("## 📊 Economic Summary")
+
+colR1, colR2, colR3 = st.columns(3)
+
+colR1.metric("Total CAPEX", f"${total_capex:,.0f}")
+colR2.metric("Annual OPEX", f"${annual_opex:,.0f}")
+colR3.metric("Gross Revenue", f"${gross_revenue:,.0f}")
+
+st.divider()
+
+colR4, colR5 = st.columns(2)
+
+colR4.metric("Net Cashflow", f"${net_cashflow:,.0f}",
+             delta="Positive" if net_cashflow > 0 else "Negative",
+             delta_color="normal")
+
+colR5.metric("Breakeven Gas Price", f"${breakeven_price:.2f}/MMcfge")
+
+st.success("Economic analysis calculation completed successfully.")
+
