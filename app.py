@@ -1,6 +1,6 @@
 # ============================================
 # STREAMLIT RESERVOIR ENGINEERING APP
-# THEMED DARK WITH WHITE TEXT, YELLOW SLIDERS & GLASS SIDEBAR
+# DARK THEME, GLASSY SIDEBAR, YELLOW ACCENTS
 # ============================================
 
 import streamlit as st
@@ -10,15 +10,19 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 import plotly.express as px
+import time
 
 # ============================================
-# 1. BACKGROUND IMAGE & GLOBAL CSS
+# 1. PAGE CONFIG & BACKGROUND
 # ============================================
 
+st.set_page_config(page_title="Reservoir Engineering App", layout="wide")
+
+# Background + global CSS
 page_bg_img = """
 <style>
 [data-testid="stAppViewContainer"] {
-  background: linear-gradient(rgba(50,50,50,0.6), rgba(50,50,50,0.6)), 
+  background: linear-gradient(rgba(30,30,30,0.6), rgba(30,30,30,0.6)), 
               url("https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/patrick-hendry-6xeDIZgoPaw-unsplash.jpg");
   background-size: cover;
   background-position: center;
@@ -28,26 +32,44 @@ body, .block-container, .stText, .stMarkdown, .stDataFrame, .stButton, .stSlider
     color: white !important;
     font-family: "Segoe UI", sans-serif;
 }
-h1, h2, h3, h4, h5 { color: #ffffff !important; font-weight: bold !important; }
-.css-1d391kg { 
-    background-color: rgba(255, 255, 255, 0.15) !important; 
-    backdrop-filter: blur(10px); 
-    color: white !important;
+h1,h2,h3,h4,h5 { 
+    color: #ffd700 !important; 
+    font-weight: bold !important; 
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
 }
+.css-1d391kg { 
+    background-color: rgba(255, 255, 255, 0.1) !important; 
+    backdrop-filter: blur(15px); 
+    color: white !important;
+    transition: 0.3s;
+}
+.css-1d391kg:hover { background-color: rgba(255,255,255,0.2) !important; }
+
 div.stButton > button {
     background-color: rgba(255, 255, 255, 0.2);
     color: white;
     font-weight: bold;
     border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.3);
+    transition: 0.3s;
 }
-div.stButton > button:hover { background-color: rgba(255, 255, 255, 0.4); }
-.stPlotlyChart { background-color: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
-.stDataFrame div.row_widget { background-color: rgba(255, 255, 255, 0.1); color: white; }
+div.stButton > button:hover { 
+    background-color: rgba(255, 255, 255, 0.4); 
+    transform: scale(1.05);
+}
 
-/* ===================== */
+.stPlotlyChart { 
+    background-color: rgba(0,0,0,0.35); 
+    border-radius: 15px; 
+    padding: 10px; 
+}
+
+.stDataFrame div.row_widget { 
+    background-color: rgba(255, 255, 255, 0.1); 
+    color: white; 
+}
+
 /* Sliders: bold white labels, yellow knob */
-/* ===================== */
 div.stSlider > label {
     color: white !important;
     font-weight: bold !important;
@@ -55,6 +77,18 @@ div.stSlider > label {
 div.stSlider > div > div > div > div > div[role="slider"] {
     background-color: #ffd700 !important;
     border: 2px solid #ffd700 !important;
+}
+div.stSlider > div > div > div > div > div[role="slider"]:hover {
+    box-shadow: 0 0 10px #ffd700;
+}
+
+/* Glass card for charts and outputs */
+.glass-card {
+    background-color: rgba(0,0,0,0.45);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
 }
 </style>
 """
@@ -107,24 +141,18 @@ def train_model(df):
 model, scaler, feature_cols, numeric_cols = train_model(df)
 
 # ============================================
-# 4. STREAMLIT PAGE CONFIG
-# ============================================
-
-st.set_page_config(page_title="Reservoir Engineering App", layout="wide")
-
-# ============================================
-# Sidebar Navigation
+# 4. SIDEBAR NAVIGATION
 # ============================================
 
 st.sidebar.title("Pages")
-page = st.sidebar.radio("Select a Page:", [
-    "Reservoir Engineering Dashboard",
-    "Reservoir Prediction",
-    "Economic Analysis"
-])
+page = st.sidebar.radio(
+    "Select a Page:", 
+    ["Reservoir Engineering Dashboard", "Reservoir Prediction", "Economic Analysis"],
+    format_func=lambda x: "📊 " + x if x=="Reservoir Engineering Dashboard" else ("🛢️ "+x if x=="Reservoir Prediction" else "💰 "+x)
+)
 
 # ============================================
-# 5. DASHBOARD CHARTS (PAGE 1)
+# 5. DASHBOARD PAGE
 # ============================================
 
 if page == "Reservoir Engineering Dashboard":
@@ -137,12 +165,10 @@ if page == "Reservoir Engineering Dashboard":
         "Proppant per foot (lbs)"
     ]
 
-    # Two-column layout
     col1, col2 = st.columns(2)
 
     for i, feature in enumerate(features_to_plot):
         target_col = col1 if i % 2 == 0 else col2
-
         df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
         binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
         binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid if x is not None else np.nan)
@@ -161,16 +187,14 @@ if page == "Reservoir Engineering Dashboard":
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=14, family='Segoe UI')),
-                       tickfont=dict(color='white', size=12, family='Segoe UI')),
-            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI')),
-                       tickfont=dict(color='white', size=12, family='Segoe UI'))
+            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=14))),
+            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=14)))
         )
-        target_col.subheader(f"{feature} vs Production")
+        target_col.markdown(f"<div class='glass-card'><h4>{feature} vs Production</h4></div>", unsafe_allow_html=True)
         target_col.plotly_chart(fig, use_container_width=True)
 
     # Depth chart full width
-    st.subheader("Depth (feet) vs Production")
+    st.markdown("<div class='glass-card'><h4>Depth (feet) vs Production</h4></div>", unsafe_allow_html=True)
     df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10, duplicates='drop')
     binned_depth_df = df.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
     binned_depth_df['bin_center'] = binned_depth_df['Depth_bin'].apply(lambda x: x.mid if x is not None else np.nan)
@@ -189,10 +213,8 @@ if page == "Reservoir Engineering Dashboard":
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', family='Segoe UI', size=12),
-        xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=14, family='Segoe UI')),
-                   tickfont=dict(color='white', size=12, family='Segoe UI')),
-        yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI')),
-                   tickfont=dict(color='white', size=12, family='Segoe UI'))
+        xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=14))),
+        yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=14)))
     )
     st.plotly_chart(fig_depth, use_container_width=True)
 
@@ -213,11 +235,13 @@ elif page == "Reservoir Prediction":
         input_data[col] = st.slider(col, min_val, max_val, mean_val, key=col)
 
     if st.button("Predict Production"):
-        input_df = pd.DataFrame([input_data])
-        input_df[numeric_cols] = scaler.transform(input_df[numeric_cols])
-        pred = model.predict(input_df)[0]
-        st.markdown(f"<h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2>", unsafe_allow_html=True)
-        st.session_state.predicted_production = pred
+        with st.spinner("Predicting production..."):
+            time.sleep(1)
+            input_df = pd.DataFrame([input_data])
+            input_df[numeric_cols] = scaler.transform(input_df[numeric_cols])
+            pred = model.predict(input_df)[0]
+            st.session_state.predicted_production = pred
+            st.markdown(f"<h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2>", unsafe_allow_html=True)
 
 # ============================================
 # 7. ECONOMIC ANALYSIS PAGE
@@ -227,6 +251,7 @@ elif page == "Economic Analysis":
     st.markdown("<h1 style='text-align:center;'>Economic Analysis</h1>", unsafe_allow_html=True)
     st.subheader("Adjust Cost Parameters")
 
+    # Sliders for costs
     base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
     base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
     proppant_cost_per_lb = st.slider("Proppant Cost ($/lb)", 0.01, 1.0, 0.1)
@@ -236,6 +261,7 @@ elif page == "Economic Analysis":
     base_pump_cost = st.slider("Pump/Energy Cost ($/year)", 10000, 50000, 20000)
     gas_price = st.slider("Gas Price ($/MMcfge)", 1, 20, 5)
 
+    # Compute economic metrics
     df["CAPEX"] = (
         base_drilling_cost * df["Depth (feet)"] +
         base_completion_cost * df["Gross Perforated Interval (ft)"] +
@@ -250,6 +276,7 @@ elif page == "Economic Analysis":
     st.subheader("Economic Metrics of Existing Wells")
     st.dataframe(df[['ID', 'CAPEX', 'OPEX', 'Revenue', 'Profit']])
 
+    # Predicted well metrics
     if "predicted_production" in st.session_state:
         P = st.session_state.predicted_production
         new_capex = (
@@ -264,7 +291,7 @@ elif page == "Economic Analysis":
         new_profit = new_revenue - new_capex - new_opex
 
         st.markdown(f"""
-        <div style='background-color:rgba(0,0,0,0.4); padding:15px; border-radius:10px; text-align:center;'>
+        <div class='glass-card' style='text-align:center;'>
             <h3 style='color:#ffd700; font-weight:bold;'>Predicted Production: {P:.2f} MMcfge</h3>
             <p style='color:white; font-weight:bold;'>CAPEX: ${new_capex:,.2f}</p>
             <p style='color:white; font-weight:bold;'>OPEX: ${new_opex:,.2f}</p>
