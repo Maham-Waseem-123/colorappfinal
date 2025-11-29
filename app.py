@@ -122,11 +122,11 @@ if page == "Reservoir Engineering Dashboard":
         "Proppant per foot (lbs)"
     ]
 
-    # Create 2 columns
     col1, col2 = st.columns(2)
 
     for i, feature in enumerate(features_to_plot):
         target_col = col1 if i % 2 == 0 else col2
+
         # Safe binned line plot
         df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
         binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
@@ -142,12 +142,21 @@ if page == "Reservoir Engineering Dashboard":
             markers=True
         )
         fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=6))
+
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white'),
-            xaxis=dict(showgrid=False),
-            yaxis=dict(showgrid=False)
+            font=dict(color='white', family='Segoe UI', size=12),
+            xaxis=dict(
+                showgrid=False,
+                title=dict(text=feature, font=dict(color='white', size=14, family='Segoe UI', bold=True)),
+                tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+            ),
+            yaxis=dict(
+                showgrid=False,
+                title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI', bold=True)),
+                tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+            )
         )
 
         target_col.subheader(f"{feature} vs Production")
@@ -172,12 +181,21 @@ if page == "Reservoir Engineering Dashboard":
     fig_depth.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white'),
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=False)
+        font=dict(color='white', family='Segoe UI', size=12),
+        xaxis=dict(
+            showgrid=False,
+            title=dict(text='Depth (feet)', font=dict(color='white', size=14, family='Segoe UI', bold=True)),
+            tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+        ),
+        yaxis=dict(
+            showgrid=False,
+            title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI', bold=True)),
+            tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+        )
     )
 
     st.plotly_chart(fig_depth, use_container_width=True)
+
 
 # ============================================
 # PAGE 2: RESERVOIR PREDICTION
