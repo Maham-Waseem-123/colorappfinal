@@ -122,12 +122,13 @@ if page == "Reservoir Engineering Dashboard":
         "Proppant per foot (lbs)"
     ]
 
+    # Two-column layout
     col1, col2 = st.columns(2)
 
     for i, feature in enumerate(features_to_plot):
         target_col = col1 if i % 2 == 0 else col2
 
-        # Safe binned line plot
+        # Binned line plot
         df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
         binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
         binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid if x is not None else np.nan)
@@ -141,7 +142,8 @@ if page == "Reservoir Engineering Dashboard":
             labels={'bin_center': feature, 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True
         )
-        fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=6))
+
+        fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=8))
 
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
@@ -149,13 +151,19 @@ if page == "Reservoir Engineering Dashboard":
             font=dict(color='white', family='Segoe UI', size=12),
             xaxis=dict(
                 showgrid=False,
-                title=dict(text=feature, font=dict(color='white', size=14, family='Segoe UI', bold=True)),
-                tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+                title=dict(
+                    text=feature,
+                    font=dict(color='white', size=14, family='Segoe UI')
+                ),
+                tickfont=dict(color='white', size=12, family='Segoe UI')
             ),
             yaxis=dict(
                 showgrid=False,
-                title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI', bold=True)),
-                tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+                title=dict(
+                    text='Production (MMcfge)',
+                    font=dict(color='white', size=14, family='Segoe UI')
+                ),
+                tickfont=dict(color='white', size=12, family='Segoe UI')
             )
         )
 
@@ -177,25 +185,25 @@ if page == "Reservoir Engineering Dashboard":
         labels={'bin_center': 'Depth (feet)', 'Production (MMcfge)': 'Production (MMcfge)'},
         markers=True
     )
-    fig_depth.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow'))
+
+    fig_depth.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=10))
     fig_depth.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', family='Segoe UI', size=12),
         xaxis=dict(
             showgrid=False,
-            title=dict(text='Depth (feet)', font=dict(color='white', size=14, family='Segoe UI', bold=True)),
-            tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+            title=dict(text='Depth (feet)', font=dict(color='white', size=14, family='Segoe UI')),
+            tickfont=dict(color='white', size=12, family='Segoe UI')
         ),
         yaxis=dict(
             showgrid=False,
-            title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI', bold=True)),
-            tickfont=dict(color='white', size=12, family='Segoe UI', bold=True)
+            title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI')),
+            tickfont=dict(color='white', size=12, family='Segoe UI')
         )
     )
 
     st.plotly_chart(fig_depth, use_container_width=True)
-
 
 # ============================================
 # PAGE 2: RESERVOIR PREDICTION
