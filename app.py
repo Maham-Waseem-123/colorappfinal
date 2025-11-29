@@ -10,15 +10,12 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 import plotly.express as px
 
-# ============================================
-# BACKGROUND IMAGE & GLOBAL STYLING
-# ============================================
-
 page_bg_img = """
 <style>
-/* Full background image */
+/* Full background image with grey overlay */
 [data-testid="stAppViewContainer"] {
-  background: url("https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/patrick-hendry-6xeDIZgoPaw-unsplash.jpg");
+  background: linear-gradient(rgba(50,50,50,0.6), rgba(50,50,50,0.6)), 
+              url("https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/patrick-hendry-6xeDIZgoPaw-unsplash.jpg");
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -37,7 +34,7 @@ h1, h2, h3, h4, h5 {
 
 /* Sidebar as glass/transparent */
 .css-1d391kg { 
-    background-color: rgba(0, 0, 0, 0.4) !important; 
+    background-color: rgba(255, 255, 255, 0.15) !important; 
     backdrop-filter: blur(10px); 
     color: white !important;
 }
@@ -69,6 +66,7 @@ div.stSlider > div { color: white; }
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
+
 
 # ============================================
 # 1. LOAD DATA
