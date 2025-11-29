@@ -325,7 +325,7 @@ elif page == "Reservoir Prediction":
             st.markdown(f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>", unsafe_allow_html=True)
 
 # ============================================
-# PAGE 3: ECONOMIC ANALYSIS (RESTORED ORIGINAL WITH SLIDERS)
+# PAGE 3: ECONOMIC ANALYSIS
 # ============================================
 
 elif page == "Economic Analysis":
@@ -360,13 +360,8 @@ elif page == "Economic Analysis":
         additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
     )
     
-    df["OPEX"] = (
-        base_maintenance_cost +
-        base_pump_cost +
-        proppant_cost_per_lb * df["Proppant per foot (lbs)"] * df["Gross Perforated Interval (ft)"] +
-        water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
-        additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
-    )
+    # Only fixed OPEX
+    df["OPEX"] = base_maintenance_cost + base_pump_cost
     
     df["Revenue"] = df["Production (MMcfge)"] * gas_price
     df["Profit"] = df["Revenue"] - df["CAPEX"] - df["OPEX"]
@@ -394,7 +389,6 @@ elif page == "Economic Analysis":
         )
 
         new_opex = base_maintenance_cost + base_pump_cost
-
         new_revenue = P * gas_price
         new_profit = new_revenue - new_capex - new_opex
         
