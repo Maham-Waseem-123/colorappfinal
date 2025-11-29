@@ -1,5 +1,6 @@
 # ============================================
-# STREAMLIT RESERVOIR ENGINEERING APP (THEMED FIXED WITH WHITE TEXT & GLASS SIDEBAR)
+# STREAMLIT RESERVOIR ENGINEERING APP
+# THEMED DARK WITH WHITE TEXT, YELLOW SLIDERS & GLASS SIDEBAR
 # ============================================
 
 import streamlit as st
@@ -10,7 +11,10 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 import plotly.express as px
 
-# Background image and styling
+# ============================================
+# 1. BACKGROUND IMAGE & GLOBAL CSS
+# ============================================
+
 page_bg_img = """
 <style>
 [data-testid="stAppViewContainer"] {
@@ -24,7 +28,7 @@ body, .block-container, .stText, .stMarkdown, .stDataFrame, .stButton, .stSlider
     color: white !important;
     font-family: "Segoe UI", sans-serif;
 }
-h1, h2, h3, h4, h5 { color: #ffffff !important; }
+h1, h2, h3, h4, h5 { color: #ffffff !important; font-weight: bold !important; }
 .css-1d391kg { 
     background-color: rgba(255, 255, 255, 0.15) !important; 
     backdrop-filter: blur(10px); 
@@ -39,14 +43,25 @@ div.stButton > button {
 }
 div.stButton > button:hover { background-color: rgba(255, 255, 255, 0.4); }
 .stPlotlyChart { background-color: rgba(0,0,0,0.3); border-radius: 15px; padding: 10px; }
-div.stSlider > div { color: white; }
 .stDataFrame div.row_widget { background-color: rgba(255, 255, 255, 0.1); color: white; }
+
+/* ===================== */
+/* Sliders: bold white labels, yellow knob */
+/* ===================== */
+div.stSlider > label {
+    color: white !important;
+    font-weight: bold !important;
+}
+div.stSlider > div > div > div > div > div[role="slider"] {
+    background-color: #ffd700 !important;
+    border: 2px solid #ffd700 !important;
+}
 </style>
 """
 st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # ============================================
-# 1. LOAD DATA
+# 2. LOAD DATA
 # ============================================
 
 @st.cache_data
@@ -62,7 +77,7 @@ def load_data():
 df = load_data()
 
 # ============================================
-# 2. TRAIN MODEL
+# 3. TRAIN MODEL
 # ============================================
 
 @st.cache_resource
@@ -92,7 +107,7 @@ def train_model(df):
 model, scaler, feature_cols, numeric_cols = train_model(df)
 
 # ============================================
-# 3. STREAMLIT PAGE CONFIG
+# 4. STREAMLIT PAGE CONFIG
 # ============================================
 
 st.set_page_config(page_title="Reservoir Engineering App", layout="wide")
@@ -109,7 +124,7 @@ page = st.sidebar.radio("Select a Page:", [
 ])
 
 # ============================================
-# PAGE 1: RESERVOIR ENGINEERING DASHBOARD
+# 5. DASHBOARD CHARTS (PAGE 1)
 # ============================================
 
 if page == "Reservoir Engineering Dashboard":
@@ -128,7 +143,6 @@ if page == "Reservoir Engineering Dashboard":
     for i, feature in enumerate(features_to_plot):
         target_col = col1 if i % 2 == 0 else col2
 
-        # Binned line plot
         df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
         binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
         binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid if x is not None else np.nan)
@@ -142,35 +156,20 @@ if page == "Reservoir Engineering Dashboard":
             labels={'bin_center': feature, 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True
         )
-
         fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=8))
-
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(
-                showgrid=False,
-                title=dict(
-                    text=feature,
-                    font=dict(color='white', size=14, family='Segoe UI')
-                ),
-                tickfont=dict(color='white', size=12, family='Segoe UI')
-            ),
-            yaxis=dict(
-                showgrid=False,
-                title=dict(
-                    text='Production (MMcfge)',
-                    font=dict(color='white', size=14, family='Segoe UI')
-                ),
-                tickfont=dict(color='white', size=12, family='Segoe UI')
-            )
+            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=14, family='Segoe UI')),
+                       tickfont=dict(color='white', size=12, family='Segoe UI')),
+            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI')),
+                       tickfont=dict(color='white', size=12, family='Segoe UI'))
         )
-
         target_col.subheader(f"{feature} vs Production")
         target_col.plotly_chart(fig, use_container_width=True)
 
-    # Depth vs Production chart (full width)
+    # Depth chart full width
     st.subheader("Depth (feet) vs Production")
     df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10, duplicates='drop')
     binned_depth_df = df.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
@@ -185,40 +184,30 @@ if page == "Reservoir Engineering Dashboard":
         labels={'bin_center': 'Depth (feet)', 'Production (MMcfge)': 'Production (MMcfge)'},
         markers=True
     )
-
     fig_depth.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=10))
     fig_depth.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='white', family='Segoe UI', size=12),
-        xaxis=dict(
-            showgrid=False,
-            title=dict(text='Depth (feet)', font=dict(color='white', size=14, family='Segoe UI')),
-            tickfont=dict(color='white', size=12, family='Segoe UI')
-        ),
-        yaxis=dict(
-            showgrid=False,
-            title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI')),
-            tickfont=dict(color='white', size=12, family='Segoe UI')
-        )
+        xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=14, family='Segoe UI')),
+                   tickfont=dict(color='white', size=12, family='Segoe UI')),
+        yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=14, family='Segoe UI')),
+                   tickfont=dict(color='white', size=12, family='Segoe UI'))
     )
-
     st.plotly_chart(fig_depth, use_container_width=True)
 
 # ============================================
-# PAGE 2: RESERVOIR PREDICTION
+# 6. RESERVOIR PREDICTION PAGE
 # ============================================
 
 elif page == "Reservoir Prediction":
     st.markdown("<h1 style='text-align:center;'>Predict New Well Production</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:white;'>Adjust parameters and predict production</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:white; font-weight:bold;'>Adjust parameters and predict production</p>", unsafe_allow_html=True)
 
     input_data = {}
     for col in feature_cols:
         col_values = df[col].dropna()
-        min_val = float(col_values.min())
-        max_val = float(col_values.max())
-        mean_val = float(col_values.mean())
+        min_val, max_val, mean_val = float(col_values.min()), float(col_values.max()), float(col_values.mean())
         if min_val == max_val:
             max_val = min_val + 1.0
         input_data[col] = st.slider(col, min_val, max_val, mean_val, key=col)
@@ -227,16 +216,17 @@ elif page == "Reservoir Prediction":
         input_df = pd.DataFrame([input_data])
         input_df[numeric_cols] = scaler.transform(input_df[numeric_cols])
         pred = model.predict(input_df)[0]
-        st.markdown(f"<h2 style='color:#eeff00; text-align:center;'>Predicted Production: {pred:.2f} MMcfge</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2>", unsafe_allow_html=True)
         st.session_state.predicted_production = pred
 
 # ============================================
-# PAGE 3: ECONOMIC ANALYSIS
+# 7. ECONOMIC ANALYSIS PAGE
 # ============================================
 
 elif page == "Economic Analysis":
     st.markdown("<h1 style='text-align:center;'>Economic Analysis</h1>", unsafe_allow_html=True)
     st.subheader("Adjust Cost Parameters")
+
     base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
     base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
     proppant_cost_per_lb = st.slider("Proppant Cost ($/lb)", 0.01, 1.0, 0.1)
@@ -275,10 +265,10 @@ elif page == "Economic Analysis":
 
         st.markdown(f"""
         <div style='background-color:rgba(0,0,0,0.4); padding:15px; border-radius:10px; text-align:center;'>
-            <h3 style='color:#ffd700;'>Predicted Production: {P:.2f} MMcfge</h3>
-            <p>CAPEX: ${new_capex:,.2f}</p>
-            <p>OPEX: ${new_opex:,.2f}</p>
-            <p>Revenue: ${new_revenue:,.2f}</p>
-            <p>Profit: ${new_profit:,.2f}</p>
+            <h3 style='color:#ffd700; font-weight:bold;'>Predicted Production: {P:.2f} MMcfge</h3>
+            <p style='color:white; font-weight:bold;'>CAPEX: ${new_capex:,.2f}</p>
+            <p style='color:white; font-weight:bold;'>OPEX: ${new_opex:,.2f}</p>
+            <p style='color:white; font-weight:bold;'>Revenue: ${new_revenue:,.2f}</p>
+            <p style='color:white; font-weight:bold;'>Profit: ${new_profit:,.2f}</p>
         </div>
         """, unsafe_allow_html=True)
