@@ -230,24 +230,34 @@ if page == "Reservoir Engineering Dashboard":
         "Proppant per foot (lbs)"
     ]
 
-    # Calculate average production per feature bin for cards
+    # Calculate max production per feature and get corresponding well ID
     feature_max_prod = []
     for feature in features_to_plot:
         if feature in df.columns:
-            df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
-            avg_prod = df.groupby('bin')['Production (MMcfge)'].mean().max()
-            feature_max_prod.append((feature, avg_prod))
+            idx_max = df[feature].idxmax()
+            max_prod = df.loc[idx_max, 'Production (MMcfge)']
+            well_id = df.loc[idx_max, 'ID']
+            feature_max_prod.append((feature, max_prod, well_id))
+
     # Sort features by max production descending
     feature_max_prod.sort(key=lambda x: x[1], reverse=True)
 
-    # Display cards in sorted order
-    for feature, max_val in feature_max_prod:
-        st.markdown(
-            f"<div class='glass-card'><h4 style='margin-bottom:6px'>{feature} (Max Production: {max_val:.2f})</h4></div>",
+    # Display cards in 4x4 grid
+    cols = st.columns(4)
+    for i, (feature, max_prod, well_id) in enumerate(feature_max_prod):
+        col = cols[i % 4]
+        col.markdown(
+            f"""
+            <div class='glass-card' style='height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center;'>
+                <h4 style='margin:0; font-weight:bold; color:white;'>{feature}</h4>
+                <p style='margin:0; font-weight:bold; color:#ffd700;'>Max Production: {max_prod:.2f}</p>
+                <p style='margin:0; font-weight:bold; color:white;'>Well ID: {well_id}</p>
+            </div>
+            """,
             unsafe_allow_html=True
         )
 
-    # Now plot charts in original column layout
+    # Plot charts in 2-column layout
     col1, col2 = st.columns(2)
     for i, feature in enumerate(features_to_plot):
         target_col = col1 if i % 2 == 0 else col2
@@ -272,13 +282,12 @@ if page == "Reservoir Engineering Dashboard":
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=13))),
-            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13)))
+            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=13, family='Segoe UI', font_weight='bold'))),
+            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13, family='Segoe UI', font_weight='bold')))
         )
-
         target_col.plotly_chart(fig, use_container_width=True)
 
-    # Depth chart full width (if column exists)
+    # Depth chart full width
     if "Depth (feet)" in df.columns:
         df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10, duplicates='drop')
         binned_depth_df = df.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
@@ -291,19 +300,18 @@ if page == "Reservoir Engineering Dashboard":
             y='Production (MMcfge)',
             labels={'bin_center': 'Depth (feet)', 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True,
-            title=""  # Remove chart title
+            title=""
         )
         fig_depth.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=10))
         fig_depth.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=13))),
-            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13)))
+            xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=13, family='Segoe UI', font_weight='bold'))),
+            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13, family='Segoe UI', font_weight='bold')))
         )
         st.plotly_chart(fig_depth, use_container_width=True)
-    else:
-        st.info("Depth (feet) column not found in data.", icon="ℹ️")
+
 
 
 # ============================================
