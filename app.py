@@ -398,11 +398,12 @@ elif page == "Reservoir Prediction":
 if "predicted_production" in st.session_state:
     P = st.session_state.predicted_production
 
-    # Plot production distribution
+    # Plot production distribution with yellow bars
     fig = px.histogram(
         df, x="Production (MMcfge)", nbins=20,
         title="Production Distribution of Existing Wells",
-        labels={"Production (MMcfge)": "Production (MMcfge)"}
+        labels={"Production (MMcfge)": "Production (MMcfge)"},
+        color_discrete_sequence=["#ffd700"]  # yellow bars
     )
 
     # Add vertical line for predicted well
@@ -412,15 +413,24 @@ if "predicted_production" in st.session_state:
         annotation_font_color="red"
     )
 
+    # Update layout for dark theme + white bold text
     fig.update_layout(
+        title=dict(text="Production Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
+        xaxis=dict(
+            title=dict(text="Production (MMcfge)", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
+            showgrid=False
+        ),
+        yaxis=dict(
+            title=dict(text="Count", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
+            showgrid=False
+        ),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', family='Segoe UI', size=12),
-        xaxis=dict(showgrid=False),
-        yaxis=dict(showgrid=False)
+        font=dict(color='white', family='Segoe UI', size=12)
     )
 
     st.plotly_chart(fig, use_container_width=True)
+
 
 # ============================================
 # PAGE 3: ECONOMIC ANALYSIS
