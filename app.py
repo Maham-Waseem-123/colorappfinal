@@ -301,6 +301,10 @@ elif page == "Reservoir Prediction":
     input_data = {}
     # Use sliders for prediction as before (yellow)
     for col in feature_cols:
+        # Skip columns ending with "_Stdev"
+        if col.endswith("_Stdev"):
+            continue
+
         col_values = df[col].dropna() if col in df.columns else pd.Series([0.0])
         min_val, max_val, mean_val = float(col_values.min()), float(col_values.max()), float(col_values.mean())
         if min_val == max_val:
@@ -323,6 +327,7 @@ elif page == "Reservoir Prediction":
             pred = model.predict(input_df)[0]
             st.session_state.predicted_production = float(pred)
             st.markdown(f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>", unsafe_allow_html=True)
+
 
 # ============================================
 # PAGE 3: ECONOMIC ANALYSIS
