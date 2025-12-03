@@ -447,14 +447,11 @@ elif page == "Economic Analysis":
 
     base_drilling_cost = st.slider("Base Drilling Cost ($/ft)", 500, 5000, 1000)
     base_completion_cost = st.slider("Base Completion Cost ($/ft)", 200, 2000, 500)
-
     proppant_cost_per_lb = st.slider("Proppant Cost ($/lb)", 0.01, 1.0, 0.10)
     water_cost_per_bbl = st.slider("Water Cost ($/bbl)", 0.5, 5.0, 1.5)
     additive_cost_per_bbl = st.slider("Additive Cost ($/bbl)", 0.5, 5.0, 2.0)
-
     base_maintenance_cost = st.slider("Maintenance Cost ($/year)", 10000, 100000, 30000)
     base_pump_cost = st.slider("Pump/Energy Cost ($/year)", 10000, 50000, 20000)
-
     gas_price = st.slider("Gas Price ($/MMcfge)", 1, 20, 5)
 
     # -----------------------------
@@ -467,11 +464,7 @@ elif page == "Economic Analysis":
         water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
         additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
     )
-
-    # Only fixed OPEX
     df["OPEX"] = base_maintenance_cost + base_pump_cost
-
-    # Revenue
     df["Revenue"] = df["Production (MMcfge)"] * gas_price
 
     # -----------------------------
@@ -481,12 +474,11 @@ elif page == "Economic Analysis":
     st.dataframe(df[['ID', 'CAPEX', 'OPEX', 'Revenue']])
 
     # -----------------------------
-    # ECONOMIC METRICS FOR PREDICTED WELL
+    # ECONOMIC METRICS FOR PREDICTED WELL (optional)
     # -----------------------------
     if "predicted_production" in st.session_state:
         P = st.session_state.predicted_production
 
-        # Predicted well metrics using average parameters
         new_capex = (
             base_drilling_cost * df["Depth (feet)"].mean() +
             base_completion_cost * df["Gross Perforated Interval (ft)"].mean() +
@@ -505,37 +497,30 @@ elif page == "Economic Analysis":
         st.write(f"Revenue: ${new_revenue:,.2f}")
         st.write(f"Profit: ${new_profit:,.2f}")
 
-        # -----------------------------
-        # Plot Revenue Distribution
-        # -----------------------------
-        fig_rev = px.histogram(
-            df, x="Revenue", nbins=20,
-            title="Revenue Distribution of Existing Wells",
-            labels={"Revenue": "Revenue ($)"},
-            color_discrete_sequence=["#ffd700"]  # yellow bars
-        )
+    # -----------------------------
+    # PLOT REVENUE DISTRIBUTION ONLY (no production charts)
+    # -----------------------------
+    fig_rev = px.histogram(
+        df, x="Revenue", nbins=20,
+        title="Revenue Distribution of Existing Wells",
+        labels={"Revenue": "Revenue ($)"},
+        color_discrete_sequence=["#ffd700"]  # yellow bars
+    )
 
-        # Add vertical line for predicted well
+    if "predicted_production" in st.session_state:
         fig_rev.add_vline(
             x=new_revenue, line_width=4, line_dash="dash", line_color="red",
             annotation_text="Predicted Well", annotation_position="top right",
             annotation_font_color="red"
         )
 
-        # Update layout for dark theme + white bold text
-        fig_rev.update_layout(
-            title=dict(text="Revenue Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
-            xaxis=dict(
-                title=dict(text="Revenue ($)", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
-                showgrid=False
-            ),
-            yaxis=dict(
-                title=dict(text="Count", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
-                showgrid=False
-            ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white', family='Segoe UI', size=12)
-        )
+    fig_rev.update_layout(
+        title=dict(text="Revenue Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
+        xaxis=dict(title=dict(text="Revenue ($)", font=dict(color='white', size=14)), showgrid=False),
+        yaxis=dict(title=dict(text="Count", font=dict(color='white', size=14)), showgrid=False),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white', family='Segoe UI', size=12)
+    )
 
-        st.plotly_chart(fig_rev, use_container_width=True)
+    st.plotly_chart(fig_rev, use_container_width=True)
