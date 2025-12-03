@@ -298,36 +298,41 @@ elif page == "Reservoir Prediction":
     st.markdown("<div class='glass-card'><h1 style='text-align:center;'>Predict New Well Production</h1></div>", unsafe_allow_html=True)
     st.markdown("<p class='small-muted' style='text-align:center;'>Adjust parameters and predict production</p>", unsafe_allow_html=True)
 
-    input_data = {}
-    # Use sliders for prediction as before (yellow)
-    for col in feature_cols:
-        # Skip columns ending with "_Stdev"
-        if col.endswith("_Stdev"):
-            continue
+    # -----------------------------
+    # FILTER FEATURES TO REMOVE _Stdev
+    # -----------------------------
+    filtered_features = [c for c in feature_cols if not c.endswith("Stdev")]
 
+    input_data = {}
+    # Use sliders for prediction (yellow)
+    for col in filtered_features:
         col_values = df[col].dropna() if col in df.columns else pd.Series([0.0])
         min_val, max_val, mean_val = float(col_values.min()), float(col_values.max()), float(col_values.mean())
         if min_val == max_val:
             max_val = min_val + 1.0
-        # To avoid enormous sliders for very wide ranges, clamp sensible default step
+        # Slider with fallback to number_input
         try:
             input_data[col] = st.slider(col, min_value=min_val, max_value=max_val, value=mean_val, key=f"pred_{col}")
         except Exception:
-            # fallback to number_input if slider fails for column
             input_data[col] = st.number_input(col, min_value=min_val, max_value=max_val, value=mean_val, key=f"pred_num_{col}")
 
+    # -----------------------------
+    # PREDICT PRODUCTION
+    # -----------------------------
     if st.button("Predict Production"):
         with st.spinner("Predicting production..."):
             time.sleep(0.9)
             input_df = pd.DataFrame([input_data])
-            # Ensure numeric_cols exist in input df before scaling
+            # Scale numeric features that exist in input
             available_numeric = [c for c in numeric_cols if c in input_df.columns]
             if available_numeric:
                 input_df[available_numeric] = scaler.transform(input_df[available_numeric])
             pred = model.predict(input_df)[0]
             st.session_state.predicted_production = float(pred)
-            st.markdown(f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>", unsafe_allow_html=True)
-
+            st.markdown(
+                f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>",
+                unsafe_allow_html=True
+            )
 
 # ============================================
 # PAGE 3: ECONOMIC ANALYSIS
