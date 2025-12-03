@@ -165,7 +165,7 @@ st.markdown(GLOBAL_CSS, unsafe_allow_html=True)
 # ============================================
 @st.cache_data
 def load_data():
-    url = ""https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/data.csv"
+    url = "https://raw.githubusercontent.com/Maham-Waseem-123/colorappfinal/main/data.csv"
     df = pd.read_csv(url)
     # Clean column names
     df.columns = df.columns.str.strip().str.replace("\n", "").str.replace("\xa0", "")
