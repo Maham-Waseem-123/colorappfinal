@@ -233,25 +233,14 @@ if page == "Reservoir Engineering Dashboard":
     # -----------------------------
     # CALCULATE REVENUE FOR TOP WELL
     # -----------------------------
-    # Assuming gas_price slider or default $5
     gas_price = st.session_state.get("gas_price", 5)  # fallback if not set
     top_well["Revenue"] = top_well["Production (MMcfge)"] * gas_price
 
     # -----------------------------
-    # REVENUE CARD
-    # -----------------------------
-    revenue_val = top_well["Revenue"].values[0]
-    st.markdown(
-        f"<div class='glass-card' style='width:100%; height:120px; display:flex; align-items:center; justify-content:center;'>"
-        f"<h2 style='color:#ffd700; text-align:center; font-weight:bold; margin:0;'>Revenue Generated: ${revenue_val:,.2f}</h2>"
-        f"</div>",
-        unsafe_allow_html=True
-    )
-
-    # -----------------------------
-    # 4x4 FEATURE CARDS FOR TOP WELL
+    # 4x4 FEATURE CARDS INCLUDING REVENUE
     # -----------------------------
     features_to_display = [
+        "Revenue",  # First card
         "ID",
         "Depth (feet)",
         "Thickness (feet)",
@@ -272,6 +261,7 @@ if page == "Reservoir Engineering Dashboard":
 
     st.subheader("Top Well Feature Values")
     rows = (len(features_to_display) + 3) // 4  # calculate number of rows for 4 columns
+
     for i in range(rows):
         cols = st.columns(4)
         for j in range(4):
@@ -281,13 +271,16 @@ if page == "Reservoir Engineering Dashboard":
             feature = features_to_display[idx]
             if feature in top_well.columns:
                 val = top_well[feature].values[0]
+                # Card with yellow title and white value
                 cols[j].markdown(
-                    f"<div class='glass-card' style='width:100%; height:100px; display:flex; align-items:center; justify-content:center;'>"
-                    f"<h4 style='text-align:center; color:white; font-weight:bold; margin:0;'>{feature}<br>{val:.2f}</h4>"
+                    f"<div class='glass-card' style='width:100%; height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center;'>"
+                    f"<h4 style='text-align:center; color:#ffd700; font-weight:bold; margin:0;'>{feature}</h4>"
+                    f"<span style='color:white; font-weight:bold; font-size:18px;'>{val:,.2f}</span>"
                     f"</div>",
                     unsafe_allow_html=True
                 )
 
+  st.subheader("Overall Reservoir Analysis")
 
     hover_cols = ["ID"]
     features_to_plot = [
