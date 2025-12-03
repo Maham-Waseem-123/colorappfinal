@@ -223,74 +223,75 @@ page = st.sidebar.radio(
 if page == "Reservoir Engineering Dashboard":
     st.markdown("<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", unsafe_allow_html=True)
 
-    features_to_plot = [
+    # ============================
+    # WELL WITH MAXIMUM PRODUCTION
+    # ============================
+    max_prod_idx = df['Production (MMcfge)'].idxmax()
+    df_max_well = df.loc[[max_prod_idx]]  # keep as DataFrame
+
+    features_to_display = [
         "Porosity",
         "Additive per foot (bbls)",
         "Water per foot (bbls)",
-        "Proppant per foot (lbs)"
+        "Proppant per foot (lbs)",
+        "Normalized Gamma Ray (API)",
+        "Density (g/cm3)",
+        "Thickness (feet)",
+        "Depth (feet)"
     ]
 
-    # Calculate max production per feature and get corresponding well ID
-    feature_max_prod = []
-    for feature in features_to_plot:
-        if feature in df.columns:
-            idx_max = df[feature].idxmax()
-            max_prod = df.loc[idx_max, 'Production (MMcfge)']
-            well_id = df.loc[idx_max, 'ID']
-            feature_max_prod.append((feature, max_prod, well_id))
+    # ============================
+    # DISPLAY 4x4 SQUARE CARDS
+    # ============================
+    st.subheader("Top Well Feature Values")
+    cols = st.columns(4)  # 4 cards per row
 
-    # Sort features by max production descending
-    feature_max_prod.sort(key=lambda x: x[1], reverse=True)
+    for i, feature in enumerate(features_to_display):
+        col = cols[i % 4]  # wrap every 4 columns
+        if feature in df_max_well.columns:
+            val = df_max_well[feature].values[0]
+            col.markdown(
+                f"<div class='glass-card' style='width:100%; height:100px; display:flex; align-items:center; justify-content:center;'>"
+                f"<h4 style='text-align:center; color:white; font-weight:bold; margin:0;'>{feature}<br>{val:.2f}</h4>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
-    # Display cards in 4x4 grid
-    cols = st.columns(4)
-    for i, (feature, max_prod, well_id) in enumerate(feature_max_prod):
-        col = cols[i % 4]
-        col.markdown(
-            f"""
-            <div class='glass-card' style='height:150px; display:flex; flex-direction:column; justify-content:center; align-items:center;'>
-                <h4 style='margin:0; font-weight:bold; color:white;'>{feature}</h4>
-                <p style='margin:0; font-weight:bold; color:#ffd700;'>Max Production: {max_prod:.2f}</p>
-                <p style='margin:0; font-weight:bold; color:white;'>Well ID: {well_id}</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+    # ============================
+    # PLOT CHARTS FOR MAX PROD WELL
+    # ============================
+    st.subheader("Feature vs Production Charts for Top Well")
 
-    # Plot charts in 2-column layout
-    col1, col2 = st.columns(2)
-    for i, feature in enumerate(features_to_plot):
-        target_col = col1 if i % 2 == 0 else col2
-        if feature not in df.columns:
+    for feature in features_to_display:
+        if feature not in df_max_well.columns:
             continue
 
-        df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
-        binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
-        binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid if x is not None else np.nan)
-        binned_df = binned_df.dropna(subset=['bin_center', 'Production (MMcfge)']).sort_values('bin_center')
-
-        fig = px.line(
-            binned_df,
-            x='bin_center',
-            y='Production (MMcfge)',
-            labels={'bin_center': feature, 'Production (MMcfge)': 'Production (MMcfge)'},
-            markers=True,
-            title=""  # Remove chart title
+        fig = px.bar(
+            df_max_well,
+            x=[feature],
+            y=['Production (MMcfge)'],
+            text='Production (MMcfge)',
+            title=f"<b>{feature} vs Production</b>"
         )
-        fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=8))
+
+        fig.update_traces(marker_color='yellow', textfont_color='white')
         fig.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=13, family='Segoe UI', font_weight='bold'))),
-            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13, family='Segoe UI', font_weight='bold')))
+            title=dict(font=dict(color='white', size=16)),
+            xaxis=dict(showgrid=False, title=dict(text=feature, font=dict(color='white', size=13))),
+            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13)))
         )
-        target_col.plotly_chart(fig, use_container_width=True)
 
-    # Depth chart full width
-    if "Depth (feet)" in df.columns:
-        df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10, duplicates='drop')
-        binned_depth_df = df.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ============================
+    # DEPTH CHART (FULL WIDTH)
+    # ============================
+    if "Depth (feet)" in df_max_well.columns:
+        df_max_well['Depth_bin'] = pd.cut(df_max_well["Depth (feet)"], bins=5, duplicates='drop')
+        binned_depth_df = df_max_well.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
         binned_depth_df['bin_center'] = binned_depth_df['Depth_bin'].apply(lambda x: x.mid if x is not None else np.nan)
         binned_depth_df = binned_depth_df.dropna(subset=['bin_center', 'Production (MMcfge)']).sort_values('bin_center')
 
@@ -300,17 +301,22 @@ if page == "Reservoir Engineering Dashboard":
             y='Production (MMcfge)',
             labels={'bin_center': 'Depth (feet)', 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True,
-            title=""
+            title="<b>Depth vs Production</b>"
         )
+
         fig_depth.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=10))
         fig_depth.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=13, family='Segoe UI', font_weight='bold'))),
-            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13, family='Segoe UI', font_weight='bold')))
+            xaxis=dict(showgrid=False, title=dict(text='Depth (feet)', font=dict(color='white', size=13))),
+            yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13))),
+            title=dict(font=dict(color='white', size=16))
         )
+
         st.plotly_chart(fig_depth, use_container_width=True)
+    else:
+        st.info("Depth (feet) column not found in data.", icon="ℹ️")
 
 
 
