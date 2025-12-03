@@ -483,41 +483,59 @@ elif page == "Economic Analysis":
     # -----------------------------
     # ECONOMIC METRICS FOR PREDICTED WELL
     # -----------------------------
-if "predicted_production" in st.session_state:
-    P = st.session_state.predicted_production
-    new_revenue = P * gas_price  # predicted well revenue
+    if "predicted_production" in st.session_state:
+        P = st.session_state.predicted_production
 
-    # -----------------------------
-    # Plot Revenue Distribution
-    # -----------------------------
-    fig_rev = px.histogram(
-        df, x="Revenue", nbins=20,
-        title="Revenue Distribution of Existing Wells",
-        labels={"Revenue": "Revenue ($)"},
-        color_discrete_sequence=["#ffd700"]  # yellow bars
-    )
+        # Predicted well metrics using average parameters
+        new_capex = (
+            base_drilling_cost * df["Depth (feet)"].mean() +
+            base_completion_cost * df["Gross Perforated Interval (ft)"].mean() +
+            proppant_cost_per_lb * df["Proppant per foot (lbs)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
+            water_cost_per_bbl * df["Water per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
+            additive_cost_per_bbl * df["Additive per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean()
+        )
+        new_opex = base_maintenance_cost + base_pump_cost
+        new_revenue = P * gas_price
+        new_profit = new_revenue - new_capex - new_opex
 
-    # Add vertical line for predicted well
-    fig_rev.add_vline(
-        x=new_revenue, line_width=4, line_dash="dash", line_color="red",
-        annotation_text="Predicted Well", annotation_position="top right",
-        annotation_font_color="red"
-    )
+        st.subheader("Economic Metrics for Predicted Well")
+        st.write(f"Predicted Production: {P:.2f} MMcfge")
+        st.write(f"CAPEX: ${new_capex:,.2f}")
+        st.write(f"OPEX: ${new_opex:,.2f}")
+        st.write(f"Revenue: ${new_revenue:,.2f}")
+        st.write(f"Profit: ${new_profit:,.2f}")
 
-    # Update layout for dark theme + white bold text
-    fig_rev.update_layout(
-        title=dict(text="Revenue Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
-        xaxis=dict(
-            title=dict(text="Revenue ($)", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
-            showgrid=False
-        ),
-        yaxis=dict(
-            title=dict(text="Count", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
-            showgrid=False
-        ),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', family='Segoe UI', size=12)
-    )
+        # -----------------------------
+        # Plot Revenue Distribution
+        # -----------------------------
+        fig_rev = px.histogram(
+            df, x="Revenue", nbins=20,
+            title="Revenue Distribution of Existing Wells",
+            labels={"Revenue": "Revenue ($)"},
+            color_discrete_sequence=["#ffd700"]  # yellow bars
+        )
 
-    st.plotly_chart(fig_rev, use_container_width=True)
+        # Add vertical line for predicted well
+        fig_rev.add_vline(
+            x=new_revenue, line_width=4, line_dash="dash", line_color="red",
+            annotation_text="Predicted Well", annotation_position="top right",
+            annotation_font_color="red"
+        )
+
+        # Update layout for dark theme + white bold text
+        fig_rev.update_layout(
+            title=dict(text="Revenue Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
+            xaxis=dict(
+                title=dict(text="Revenue ($)", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
+                showgrid=False
+            ),
+            yaxis=dict(
+                title=dict(text="Count", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
+                showgrid=False
+            ),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white', family='Segoe UI', size=12)
+        )
+
+        st.plotly_chart(fig_rev, use_container_width=True)
