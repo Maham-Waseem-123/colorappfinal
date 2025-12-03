@@ -248,7 +248,7 @@ if page == "Reservoir Engineering Dashboard":
             y='Production (MMcfge)',
             labels={'bin_center': xcol, 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True,
-            title=f"Production vs {xcol} (Binned)"
+            title=f"{xcol}"  # Only show the feature name as title
         )
 
         fig.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=8))
@@ -266,7 +266,6 @@ if page == "Reservoir Engineering Dashboard":
     # -----------------------------
     # PLOT BINS FOR SELECTED FEATURES
     # -----------------------------
-    st.subheader("Production vs Key Features (Binned)")
     for col in features_to_plot:
         if col in df.columns:
             make_binned_lineplot(df, col, bins=10)
@@ -275,10 +274,10 @@ if page == "Reservoir Engineering Dashboard":
     # DEPTH VS PRODUCTION (FULL DATA)
     # -----------------------------
     if "Depth (feet)" in df.columns:
-        st.subheader("Depth (feet) vs Production (Binned)")
         make_binned_lineplot(df, "Depth (feet)", bins=10)
     else:
         st.info("Depth (feet) column not found in data.", icon="ℹ️")
+
 
 # ============================================
 # RESERVOIR PREDICTION PAGE
