@@ -366,82 +366,80 @@ elif page == "Reservoir Prediction":
     filtered_features = [c for c in feature_cols if not c.endswith("Stdev")]
 
     input_data = {}
-    # Use sliders for prediction (yellow)
+
     for col in filtered_features:
         col_values = df[col].dropna() if col in df.columns else pd.Series([0.0])
         min_val, max_val, mean_val = float(col_values.min()), float(col_values.max()), float(col_values.mean())
+
         if min_val == max_val:
             max_val = min_val + 1.0
-        # Slider with fallback to number_input
+
         try:
             input_data[col] = st.slider(col, min_value=min_val, max_value=max_val, value=mean_val, key=f"pred_{col}")
         except Exception:
             input_data[col] = st.number_input(col, min_value=min_val, max_value=max_val, value=mean_val, key=f"pred_num_{col}")
 
     # -----------------------------
-    # PREDICT PRODUCTION
+    # PREDICT BUTTON
     # -----------------------------
     if st.button("Predict Production"):
         with st.spinner("Predicting production..."):
             time.sleep(0.9)
             input_df = pd.DataFrame([input_data])
-            # Scale numeric features that exist in input
+
             available_numeric = [c for c in numeric_cols if c in input_df.columns]
             if available_numeric:
                 input_df[available_numeric] = scaler.transform(input_df[available_numeric])
+
             pred = model.predict(input_df)[0]
             st.session_state.predicted_production = float(pred)
+
             st.markdown(
                 f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>",
                 unsafe_allow_html=True
             )
-if "predicted_production" in st.session_state:
-    P = st.session_state.predicted_production
 
-    # Plot production distribution with yellow bars
-    fig = px.histogram(
-        df, x="Production (MMcfge)", nbins=20,
-        title="Production Distribution of Existing Wells",
-        labels={"Production (MMcfge)": "Production (MMcfge)"},
-        color_discrete_sequence=["#ffd700"]  # yellow bars
-    )
+    # -----------------------------
+    # PREDICTION HISTOGRAM (ONLY SHOWN ON THIS PAGE)
+    # -----------------------------
+    if "predicted_production" in st.session_state:
+        P = st.session_state.predicted_production
 
-    # Add vertical line for predicted well
-    fig.add_vline(
-        x=P, line_width=4, line_dash="dash", line_color="red",
-        annotation_text="Predicted Well", annotation_position="top right",
-        annotation_font_color="red"
-    )
+        fig = px.histogram(
+            df, x="Production (MMcfge)", nbins=20,
+            title="Production Distribution of Existing Wells",
+            labels={"Production (MMcfge)": "Production (MMcfge)"},
+            color_discrete_sequence=["#ffd700"]
+        )
 
-    # Update layout for dark theme + white bold text
-    fig.update_layout(
-        title=dict(text="Production Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
-        xaxis=dict(
-            title=dict(text="Production (MMcfge)", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
-            showgrid=False
-        ),
-        yaxis=dict(
-            title=dict(text="Count", font=dict(color='white', size=14, family="Segoe UI", weight="bold")),
-            showgrid=False
-        ),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', family='Segoe UI', size=12)
-    )
+        fig.add_vline(
+            x=P, line_width=4, line_dash="dash", line_color="red",
+            annotation_text="Predicted Well", annotation_position="top right",
+            annotation_font_color="red"
+        )
 
-    st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            title=dict(text="Production Distribution of Existing Wells", font=dict(color='white', size=16)),
+            xaxis=dict(title=dict(text="Production (MMcfge)", font=dict(color='white')), showgrid=False),
+            yaxis=dict(title=dict(text="Count", font=dict(color='white')), showgrid=False),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            font=dict(color='white')
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
 
 
 # ============================================
-# PAGE 3: ECONOMIC ANALYSIS
+# ECONOMIC ANALYSIS PAGE
 # ============================================
-
 elif page == "Economic Analysis":
-    
+
     st.title("Economic Analysis")
 
     # -----------------------------
-    # COST PARAMETERS (SLIDERS)
+    # COST PARAMETERS
     # -----------------------------
     st.subheader("Adjust Cost Parameters")
 
@@ -454,8 +452,11 @@ elif page == "Economic Analysis":
     base_pump_cost = st.slider("Pump/Energy Cost ($/year)", 10000, 50000, 20000)
     gas_price = st.slider("Gas Price ($/MMcfge)", 1, 20, 5)
 
+    # Store gas price for dashboard
+    st.session_state["gas_price"] = gas_price
+
     # -----------------------------
-    # CALCULATE CAPEX & OPEX FOR EXISTING WELLS
+    # ECONOMIC CALCULATIONS
     # -----------------------------
     df["CAPEX"] = (
         base_drilling_cost * df["Depth (feet)"] +
@@ -464,17 +465,18 @@ elif page == "Economic Analysis":
         water_cost_per_bbl * df["Water per foot (bbls)"] * df["Gross Perforated Interval (ft)"] +
         additive_cost_per_bbl * df["Additive per foot (bbls)"] * df["Gross Perforated Interval (ft)"]
     )
+
     df["OPEX"] = base_maintenance_cost + base_pump_cost
     df["Revenue"] = df["Production (MMcfge)"] * gas_price
 
     # -----------------------------
-    # DISPLAY EXISTING WELLS ECONOMICS
+    # DISPLAY TABLE
     # -----------------------------
     st.subheader("Economic Metrics of Existing Wells")
     st.dataframe(df[['ID', 'CAPEX', 'OPEX', 'Revenue']])
 
     # -----------------------------
-    # ECONOMIC METRICS FOR PREDICTED WELL (optional)
+    # ECONOMICS FOR PREDICTED WELL
     # -----------------------------
     if "predicted_production" in st.session_state:
         P = st.session_state.predicted_production
@@ -486,6 +488,7 @@ elif page == "Economic Analysis":
             water_cost_per_bbl * df["Water per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean() +
             additive_cost_per_bbl * df["Additive per foot (bbls)"].mean() * df["Gross Perforated Interval (ft)"].mean()
         )
+
         new_opex = base_maintenance_cost + base_pump_cost
         new_revenue = P * gas_price
         new_profit = new_revenue - new_capex - new_opex
@@ -498,13 +501,13 @@ elif page == "Economic Analysis":
         st.write(f"Profit: ${new_profit:,.2f}")
 
     # -----------------------------
-    # PLOT REVENUE DISTRIBUTION ONLY (no production charts)
+    # REVENUE HISTOGRAM
     # -----------------------------
     fig_rev = px.histogram(
         df, x="Revenue", nbins=20,
         title="Revenue Distribution of Existing Wells",
         labels={"Revenue": "Revenue ($)"},
-        color_discrete_sequence=["#ffd700"]  # yellow bars
+        color_discrete_sequence=["#ffd700"]
     )
 
     if "predicted_production" in st.session_state:
@@ -515,12 +518,12 @@ elif page == "Economic Analysis":
         )
 
     fig_rev.update_layout(
-        title=dict(text="Revenue Distribution of Existing Wells", font=dict(color='white', size=16, family="Segoe UI", weight="bold")),
-        xaxis=dict(title=dict(text="Revenue ($)", font=dict(color='white', size=14)), showgrid=False),
-        yaxis=dict(title=dict(text="Count", font=dict(color='white', size=14)), showgrid=False),
+        title=dict(text="Revenue Distribution of Existing Wells", font=dict(color='white')),
+        xaxis=dict(title=dict(text="Revenue ($)", font=dict(color='white')), showgrid=False),
+        yaxis=dict(title=dict(text="Count", font=dict(color='white')), showgrid=False),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='white', family='Segoe UI', size=12)
+        font=dict(color='white')
     )
 
     st.plotly_chart(fig_rev, use_container_width=True)
