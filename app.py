@@ -221,8 +221,15 @@ page = st.sidebar.radio(
 # RESERVOIR ENGINEERING DASHBOARD
 # ============================================
 
+# ============================================
+# RESERVOIR ENGINEERING DASHBOARD
+# ============================================
+
 if page == "Reservoir Engineering Dashboard":
-    st.markdown("<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", unsafe_allow_html=True)
+    st.markdown(
+        "<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", 
+        unsafe_allow_html=True
+    )
 
     # -----------------------------
     # FIND WELL WITH MAX PRODUCTION
@@ -233,23 +240,11 @@ if page == "Reservoir Engineering Dashboard":
     # -----------------------------
     # CALCULATE REVENUE FOR TOP WELL
     # -----------------------------
-    # Assuming gas_price slider or default $5
     gas_price = st.session_state.get("gas_price", 5)  # fallback if not set
     top_well["Revenue"] = top_well["Production (MMcfge)"] * gas_price
 
     # -----------------------------
-    # REVENUE CARD
-    # -----------------------------
-    revenue_val = top_well["Revenue"].values[0]
-    st.markdown(
-        f"<div class='glass-card' style='width:100%; height:120px; display:flex; align-items:center; justify-content:center;'>"
-        f"<h2 style='color:#ffd700; text-align:center; font-weight:bold; margin:0;'>Revenue Generated: ${revenue_val:,.2f}</h2>"
-        f"</div>",
-        unsafe_allow_html=True
-    )
-
-    # -----------------------------
-    # 4x4 FEATURE CARDS FOR TOP WELL
+    # 4x4 FEATURE CARDS INCLUDING REVENUE
     # -----------------------------
     features_to_display = [
         "ID",
@@ -267,7 +262,8 @@ if page == "Reservoir Engineering Dashboard":
         "Acre Spacing (acres)",
         "Surface Latitude",
         "Surface Longitude",
-        "Production (MMcfge)"
+        "Production (MMcfge)",
+        "Revenue"  # Add Revenue here for 4x4 layout
     ]
 
     st.subheader("Top Well Feature Values")
@@ -281,9 +277,18 @@ if page == "Reservoir Engineering Dashboard":
             feature = features_to_display[idx]
             if feature in top_well.columns:
                 val = top_well[feature].values[0]
+                # Format Revenue differently
+                if feature == "Revenue":
+                    val_str = f"${val:,.2f}"
+                    card_color = "#ffd700"  # gold for revenue
+                    text_color = "#000000"
+                else:
+                    val_str = f"{val:.2f}" if isinstance(val, (int, float)) else val
+                    card_color = "#1f2937"  # default dark card
+                    text_color = "#ffffff"
                 cols[j].markdown(
-                    f"<div class='glass-card' style='width:100%; height:100px; display:flex; align-items:center; justify-content:center;'>"
-                    f"<h4 style='text-align:center; color:white; font-weight:bold; margin:0;'>{feature}<br>{val:.2f}</h4>"
+                    f"<div class='glass-card' style='width:100%; height:100px; background-color:{card_color}; display:flex; align-items:center; justify-content:center;'>"
+                    f"<h4 style='text-align:center; color:{text_color}; font-weight:bold; margin:0;'>{feature}<br>{val_str}</h4>"
                     f"</div>",
                     unsafe_allow_html=True
                 )
