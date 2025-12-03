@@ -222,16 +222,13 @@ page = st.sidebar.radio(
 # ============================================
 
 if page == "Reservoir Engineering Dashboard":
-    st.markdown(
-        "<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown("<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", unsafe_allow_html=True)
 
     # -----------------------------
     # FIND WELL WITH MAX PRODUCTION
     # -----------------------------
     max_prod_idx = df['Production (MMcfge)'].idxmax()
-    top_well = df.loc[[max_prod_idx]].copy()  # keep as DataFrame and avoid warnings
+    top_well = df.loc[[max_prod_idx]]  # keep as DataFrame
 
     # -----------------------------
     # CALCULATE REVENUE FOR TOP WELL
@@ -274,16 +271,11 @@ if page == "Reservoir Engineering Dashboard":
             feature = features_to_display[idx]
             if feature in top_well.columns:
                 val = top_well[feature].values[0]
-                # Format numbers if numeric, else show as string
-                if isinstance(val, (int, float, np.number)):
-                    val_str = f"{val:,.2f}"
-                else:
-                    val_str = str(val)
                 # Card with yellow title and white value
                 cols[j].markdown(
                     f"<div class='glass-card' style='width:100%; height:100px; display:flex; flex-direction:column; align-items:center; justify-content:center;'>"
                     f"<h4 style='text-align:center; color:#ffd700; font-weight:bold; margin:0;'>{feature}</h4>"
-                    f"<span style='color:white; font-weight:bold; font-size:18px;'>{val_str}</span>"
+                    f"<span style='color:white; font-weight:bold; font-size:18px;'>{val:,.2f}</span>"
                     f"</div>",
                     unsafe_allow_html=True
                 )
