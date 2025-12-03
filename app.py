@@ -395,6 +395,32 @@ elif page == "Reservoir Prediction":
                 f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>",
                 unsafe_allow_html=True
             )
+if "predicted_production" in st.session_state:
+    P = st.session_state.predicted_production
+
+    # Plot production distribution
+    fig = px.histogram(
+        df, x="Production (MMcfge)", nbins=20,
+        title="Production Distribution of Existing Wells",
+        labels={"Production (MMcfge)": "Production (MMcfge)"}
+    )
+
+    # Add vertical line for predicted well
+    fig.add_vline(
+        x=P, line_width=4, line_dash="dash", line_color="red",
+        annotation_text="Predicted Well", annotation_position="top right",
+        annotation_font_color="red"
+    )
+
+    fig.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='white', family='Segoe UI', size=12),
+        xaxis=dict(showgrid=False),
+        yaxis=dict(showgrid=False)
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
 
 # ============================================
 # PAGE 3: ECONOMIC ANALYSIS
