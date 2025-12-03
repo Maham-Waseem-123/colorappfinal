@@ -230,12 +230,28 @@ if page == "Reservoir Engineering Dashboard":
         "Proppant per foot (lbs)"
     ]
 
+    # Calculate average production per feature bin for cards
+    feature_max_prod = []
+    for feature in features_to_plot:
+        if feature in df.columns:
+            df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
+            avg_prod = df.groupby('bin')['Production (MMcfge)'].mean().max()
+            feature_max_prod.append((feature, avg_prod))
+    # Sort features by max production descending
+    feature_max_prod.sort(key=lambda x: x[1], reverse=True)
+
+    # Display cards in sorted order
+    for feature, max_val in feature_max_prod:
+        st.markdown(
+            f"<div class='glass-card'><h4 style='margin-bottom:6px'>{feature} (Max Production: {max_val:.2f})</h4></div>",
+            unsafe_allow_html=True
+        )
+
+    # Now plot charts in original column layout
     col1, col2 = st.columns(2)
     for i, feature in enumerate(features_to_plot):
         target_col = col1 if i % 2 == 0 else col2
-        # Safe guard for missing features
         if feature not in df.columns:
-            target_col.markdown(f"<div class='glass-card'><h4>{feature} not available in data</h4></div>", unsafe_allow_html=True)
             continue
 
         df['bin'] = pd.cut(df[feature], bins=10, duplicates='drop')
@@ -249,7 +265,7 @@ if page == "Reservoir Engineering Dashboard":
             y='Production (MMcfge)',
             labels={'bin_center': feature, 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True,
-            title=f"{feature} vs Production"
+            title=""  # Remove chart title
         )
         fig.update_traces(line=dict(color='yellow', width=3), marker=dict(color='yellow', size=8))
         fig.update_layout(
@@ -260,12 +276,10 @@ if page == "Reservoir Engineering Dashboard":
             yaxis=dict(showgrid=False, title=dict(text='Production (MMcfge)', font=dict(color='white', size=13)))
         )
 
-        target_col.markdown(f"<div class='glass-card'><h4 style='margin-bottom:6px'>{feature} vs Production</h4></div>", unsafe_allow_html=True)
         target_col.plotly_chart(fig, use_container_width=True)
 
     # Depth chart full width (if column exists)
     if "Depth (feet)" in df.columns:
-        st.markdown("<div class='glass-card'><h4>Depth (feet) vs Production</h4></div>", unsafe_allow_html=True)
         df['Depth_bin'] = pd.cut(df["Depth (feet)"], bins=10, duplicates='drop')
         binned_depth_df = df.groupby('Depth_bin', as_index=False)['Production (MMcfge)'].mean()
         binned_depth_df['bin_center'] = binned_depth_df['Depth_bin'].apply(lambda x: x.mid if x is not None else np.nan)
@@ -277,7 +291,7 @@ if page == "Reservoir Engineering Dashboard":
             y='Production (MMcfge)',
             labels={'bin_center': 'Depth (feet)', 'Production (MMcfge)': 'Production (MMcfge)'},
             markers=True,
-            title="Depth vs Production"
+            title=""  # Remove chart title
         )
         fig_depth.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=10))
         fig_depth.update_layout(
@@ -290,6 +304,7 @@ if page == "Reservoir Engineering Dashboard":
         st.plotly_chart(fig_depth, use_container_width=True)
     else:
         st.info("Depth (feet) column not found in data.", icon="ℹ️")
+
 
 # ============================================
 # RESERVOIR PREDICTION PAGE
