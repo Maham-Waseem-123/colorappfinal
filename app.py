@@ -212,7 +212,7 @@ model, scaler, feature_cols, numeric_cols = train_model(df)
 st.sidebar.title("Pages")
 page = st.sidebar.radio(
     "Select a Page:",
-    ["Reservoir Engineering Dashboard", "Reservoir Prediction", "Economic Analysis"],
+    ["Reservoir Engineering Dashboard", "Reservoir Prediction", "Economic Analysis", "Admin Model Training" ],
     index=0,
     format_func=lambda x: "📊 " + x if x == "Reservoir Engineering Dashboard" else ("🛢️ " + x if x == "Reservoir Prediction" else "💰 " + x)
 )
