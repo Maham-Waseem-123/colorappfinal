@@ -10,10 +10,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import time
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
@@ -277,95 +273,50 @@ def train_model_by_method(df, method):
         r2 = r2_score(y_test, preds)
         return model, scaler, feature_cols, r2
 
-    # --------------- PYTORCH DEEP NN ---------------
-    elif method == "Deep Neural Network (PyTorch)":
+ def train_model_by_method(df, method):
+    target = "Production (MMcfge)"
+    feature_cols = df.drop(columns=["ID", target]).columns.tolist()
 
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    X = df[feature_cols]
+    y = df[target]
 
-        X_train_tensor = torch.tensor(X_train, dtype=torch.float32).to(device)
-        y_train_tensor = torch.tensor(y_train.values.reshape(-1, 1), dtype=torch.float32).to(device)
-        X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
-        class TabularMLP(nn.Module):
-            def __init__(self, input_dim):
-                super().__init__()
-                self.layers = nn.Sequential(
-                    nn.Linear(input_dim, 64),
-                    nn.ReLU(),
-                    nn.Linear(64, 32),
-                    nn.ReLU(),
-                    nn.Linear(32, 1)
-                )
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
-            def forward(self, x):
-                return self.layers(x)
+    # ---------------- GBRT ----------------
+    if method == "Gradient Boosting (GBRT)":
+        model = GradientBoostingRegressor(
+            loss="absolute_error",
+            learning_rate=0.1,
+            n_estimators=600,
+            max_depth=1,
+            random_state=42,
+        )
 
-        model = TabularMLP(X_train.shape[1]).to(device)
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
+    # --------------- Random Forest ---------------
+    elif method == "Random Forest":
+        model = RandomForestRegressor(
+            n_estimators=400,
+            random_state=42
+        )
 
-        for epoch in range(150):
-            model.train()
-            optimizer.zero_grad()
-            outputs = model(X_train_tensor)
-            loss = criterion(outputs, y_train_tensor)
-            loss.backward()
-            optimizer.step()
+    # --------------- Linear Regression ---------------
+    elif method == "Linear Regression":
+        model = LinearRegression()
 
-        model.eval()
-        preds = model(X_test_tensor).detach().cpu().numpy()
-        r2 = r2_score(y_test, preds)
-
-        return model, scaler, feature_cols, r2
-
-    # --------------- TAB TRANSFORMER ---------------
-    elif method == "TabTransformer":
-
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-        X_train_tensor = torch.tensor(X_train, dtype=torch.float32).to(device)
-        y_train_tensor = torch.tensor(y_train.values.reshape(-1, 1), dtype=torch.float32).to(device)
-        X_test_tensor = torch.tensor(X_test, dtype=torch.float32).to(device)
-
-        train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-        train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-
-        class TabTransformer(nn.Module):
-            def __init__(self, num_features, dim=64, heads=4, layers=4):
-                super().__init__()
-                self.embedding = nn.Linear(num_features, dim)
-
-                enc_layer = nn.TransformerEncoderLayer(
-                    d_model=dim, nhead=heads, batch_first=True
-                )
-
-                self.transformer = nn.TransformerEncoder(enc_layer, num_layers=layers)
-                self.regressor = nn.Linear(dim, 1)
-
-            def forward(self, x):
-                x = self.embedding(x)
-                x = x.unsqueeze(1)
-                x = self.transformer(x)
-                x = torch.mean(x, dim=1)
-                return self.regressor(x)
-
-        model = TabTransformer(num_features=X_train.shape[1]).to(device)
-        criterion = nn.MSELoss()
-        optimizer = optim.Adam(model.parameters(), lr=0.001)
-
-        for epoch in range(120):
-            for xb, yb in train_loader:
-                optimizer.zero_grad()
-                preds = model(xb)
-                loss = criterion(preds, yb)
-                loss.backward()
-                optimizer.step()
-
-        model.eval()
-        preds = model(X_test_tensor).detach().cpu().numpy()
-        r2 = r2_score(y_test, preds)
-
-        return model, scaler, feature_cols, r2
+    # --------------- SKLEARN MLP ---------------
+    elif method == "Neural Network (MLP)":
+        model = MLPRegressor(
+            hidden_layer_sizes=(64, 64),
+            activation="relu",
+            max_iter=2000,
+            random_state=42,
+        )
 
     # ---------- default branch fit ----------
     model.fit(X_train, y_train)
@@ -373,6 +324,7 @@ def train_model_by_method(df, method):
     r2 = r2_score(y_test, preds)
 
     return model, scaler, feature_cols, r2
+
 
 # ============================================
 # SIDEBAR NAVIGATION
@@ -713,9 +665,7 @@ if page == "Admin Model Training":
             "Gradient Boosting (GBRT)",
             "Random Forest",
             "Linear Regression",
-            "Neural Network (MLP)",
-            "Deep Neural Network (PyTorch)",
-            "TabTransformer"
+            "Neural Network (MLP)"
         ]
     )
 
@@ -730,15 +680,11 @@ if page == "Admin Model Training":
         with st.spinner("Training model..."):
             model_admin, scaler_admin, cols_admin, r2_admin = train_model_by_method(df, method)
 
+            # Take first row as sample for prediction
             sample = df[cols_admin].iloc[[0]]
             sample_scaled = scaler_admin.transform(sample)
 
-            try:
-                predicted_prod = model_admin.predict(sample_scaled)[0]
-            except:
-                sample_tensor = torch.tensor(sample_scaled, dtype=torch.float32)
-                predicted_prod = model_admin(sample_tensor).detach().numpy()[0]
-
+            predicted_prod = model_admin.predict(sample_scaled)[0]
             revenue = predicted_prod * gas_price
 
         st.success("Training completed successfully")
