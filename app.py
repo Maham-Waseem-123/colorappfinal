@@ -611,7 +611,7 @@ elif page == "Admin Model Training":
 
         with st.spinner("Training model..."):
 
-            # Train the model using your existing function
+            # Train the model
             model_admin, scaler_admin, cols_admin, r2_admin = train_model_by_method(df, method)
 
             # Pick first row for demo prediction
@@ -622,22 +622,39 @@ elif page == "Admin Model Training":
 
             st.success("Training completed successfully")
 
-            # ------------------------------
-            # Display metrics inside white-text glass card
-            # ------------------------------
+            # Display metrics inside glass card with inline CSS for white titles
             st.markdown(f"""
-            <div class='glass-card'>
-                <p class='metric-label'>Training Method:</p> {method}<br>
-                <p class='metric-label'>Gas Price ($/MMcfge):</p> {gas_price}<br>
-                <p class='metric-label'>R² Score:</p> {r2_admin:.3f}<br>
-                <p class='metric-label'>Predicted Production (MMcfge):</p> {predicted_prod:.2f}<br>
-                <p class='metric-label'>Predicted Revenue ($):</p> {revenue:,.2f}
+            <div class='glass-card' style='padding:16px;'>
+                <style>
+                    .metric-label {{
+                        color: white !important;
+                        font-weight: 700 !important;
+                        margin: 0;
+                        font-size: 14px;
+                    }}
+                    .metric-value {{
+                        color: #ffd700;  /* gold numbers */
+                        font-weight: 800;
+                        font-size: 16px;
+                        margin-bottom: 8px;
+                    }}
+                </style>
+
+                <p class='metric-label'>Training Method:</p>
+                <p class='metric-value'>{method}</p>
+
+                <p class='metric-label'>Gas Price ($/MMcfge):</p>
+                <p class='metric-value'>{gas_price}</p>
+
+                <p class='metric-label'>R² Score:</p>
+                <p class='metric-value'>{r2_admin:.3f}</p>
+
+                <p class='metric-label'>Predicted Production (MMcfge):</p>
+                <p class='metric-value'>{predicted_prod:.2f}</p>
+
+                <p class='metric-label'>Predicted Revenue ($):</p>
+                <p class='metric-value'>{revenue:,.2f}</p>
             </div>
             """, unsafe_allow_html=True)
 
-            # Optional: Keep st.metric version below if you want both
-            st.metric("Model Selected", method)
-            st.metric("R² Score", f"{r2_admin:.3f}")
-            st.metric("Predicted Production (MMcfge)", f"{predicted_prod:.2f}")
-            st.metric("Predicted Revenue ($)", f"{revenue:,.2f}")
 
