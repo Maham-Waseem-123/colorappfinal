@@ -195,36 +195,10 @@ def load_data():
 df = load_data()
 
 # ============================================
-# TRAIN MODEL
+# BASE MODEL (FOR PREDICTION PAGE)
 # ============================================
 @st.cache_resource
-def train_model(df):
-    target = "Production (MMcfge)"
-    feature_cols = df.drop(columns=["ID", target]).columns.tolist()
-    numeric_cols = feature_cols.copy()
-    X = df[feature_cols].copy()
-    y = df[target].copy()
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    scaler = StandardScaler()
-    X_train[numeric_cols] = scaler.fit_transform(X_train[numeric_cols])
-    X_test[numeric_cols] = scaler.transform(X_test[numeric_cols])
-
-    gbr = GradientBoostingRegressor(
-        loss="absolute_error",
-        learning_rate=0.1,
-        n_estimators=600,
-        max_depth=1,
-        random_state=42,
-        max_features=5
-    )
-    gbr.fit(X_train, y_train)
-    return gbr, scaler, feature_cols, numeric_cols
-
-model, scaler, feature_cols, numeric_cols = train_model(df)
-
-def train_model_by_method(df, method):
-
+def train_default_model(df):
     target = "Production (MMcfge)"
     feature_cols = df.drop(columns=["ID", target]).columns.tolist()
 
@@ -239,39 +213,76 @@ def train_model_by_method(df, method):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    # ---------------- GBRT ----------------
+    model = GradientBoostingRegressor(
+        loss="absolute_error",
+        learning_rate=0.1,
+        n_estimators=600,
+        max_depth=1,
+        random_state=42
+    )
+
+    model.fit(X_train, y_train)
+    return model, scaler, feature_cols
+
+
+model, scaler, feature_cols = train_default_model(df)
+
+
+# ============================================
+# ADMIN TRAINING FUNCTION (FIXED)
+# ============================================
+def train_model_by_method(df, method):
+    target = "Production (MMcfge)"
+    feature_cols = df.drop(columns=["ID", target]).columns.tolist()
+
+    X = df[feature_cols]
+    y = df[target]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
     if method == "Gradient Boosting (GBRT)":
         model = GradientBoostingRegressor(
             loss="absolute_error",
             learning_rate=0.1,
             n_estimators=600,
             max_depth=1,
-            random_state=42,
+            random_state=42
         )
 
-    # --------------- Random Forest ---------------
     elif method == "Random Forest":
         model = RandomForestRegressor(
             n_estimators=400,
             random_state=42
         )
 
-    # --------------- Linear Regression ---------------
     elif method == "Linear Regression":
         model = LinearRegression()
 
-    # --------------- SKLEARN MLP ---------------
     elif method == "Neural Network (MLP)":
         model = MLPRegressor(
             hidden_layer_sizes=(64, 64),
             activation="relu",
             max_iter=2000,
-            random_state=42,
+            random_state=42
         )
-        model.fit(X_train, y_train)
-        preds = model.predict(X_test)
-        r2 = r2_score(y_test, preds)
-        return model, scaler, feature_cols, r2
+
+    else:
+        raise ValueError("Unknown training method")
+
+    # ---- COMMON TRAINING BLOCK ----
+    model.fit(X_train, y_train)
+    preds = model.predict(X_test)
+    r2 = r2_score(y_test, preds)
+
+    return model, scaler, feature_cols, r2
+
+
 
 # ============================================
 # SIDEBAR NAVIGATION
