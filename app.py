@@ -622,21 +622,27 @@ elif page == "Admin Model Training":
 
             st.success("Training completed successfully")
 
-            # Display metrics inside glass card with inline CSS for white titles
+            # Display metrics inside glass card with highlighted titles
             st.markdown(f"""
             <div class='glass-card' style='padding:16px;'>
+
                 <style>
                     .metric-label {{
-                        color: white !important;
+                        background-color: rgba(255, 215, 0, 0.2);  /* semi-transparent gold highlight */
+                        color: black !important;
                         font-weight: 700 !important;
-                        margin: 0;
                         font-size: 14px;
+                        padding: 4px 8px;
+                        border-radius: 6px;
+                        display: inline-block;
+                        margin-top: 6px;
                     }}
                     .metric-value {{
                         color: #ffd700;  /* gold numbers */
                         font-weight: 800;
                         font-size: 16px;
                         margin-bottom: 8px;
+                        display:block;
                     }}
                 </style>
 
@@ -654,6 +660,7 @@ elif page == "Admin Model Training":
 
                 <p class='metric-label'>Predicted Revenue ($):</p>
                 <p class='metric-value'>{revenue:,.2f}</p>
+
             </div>
             """, unsafe_allow_html=True)
 
