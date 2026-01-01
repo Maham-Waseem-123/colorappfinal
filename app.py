@@ -273,59 +273,6 @@ def train_model_by_method(df, method):
         r2 = r2_score(y_test, preds)
         return model, scaler, feature_cols, r2
 
- def train_model_by_method(df, method):
-    target = "Production (MMcfge)"
-    feature_cols = df.drop(columns=["ID", target]).columns.tolist()
-
-    X = df[feature_cols]
-    y = df[target]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    scaler = StandardScaler()
-    X_train = scaler.fit_transform(X_train)
-    X_test = scaler.transform(X_test)
-
-    # ---------------- GBRT ----------------
-    if method == "Gradient Boosting (GBRT)":
-        model = GradientBoostingRegressor(
-            loss="absolute_error",
-            learning_rate=0.1,
-            n_estimators=600,
-            max_depth=1,
-            random_state=42,
-        )
-
-    # --------------- Random Forest ---------------
-    elif method == "Random Forest":
-        model = RandomForestRegressor(
-            n_estimators=400,
-            random_state=42
-        )
-
-    # --------------- Linear Regression ---------------
-    elif method == "Linear Regression":
-        model = LinearRegression()
-
-    # --------------- SKLEARN MLP ---------------
-    elif method == "Neural Network (MLP)":
-        model = MLPRegressor(
-            hidden_layer_sizes=(64, 64),
-            activation="relu",
-            max_iter=2000,
-            random_state=42,
-        )
-
-    # ---------- default branch fit ----------
-    model.fit(X_train, y_train)
-    preds = model.predict(X_test)
-    r2 = r2_score(y_test, preds)
-
-    return model, scaler, feature_cols, r2
-
-
 # ============================================
 # SIDEBAR NAVIGATION
 # ============================================
