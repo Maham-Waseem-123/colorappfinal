@@ -622,45 +622,14 @@ elif page == "Admin Model Training":
 
             st.success("Training completed successfully")
 
-            # Display metrics inside glass card with highlighted titles
+            # Display metrics inside glass card
             st.markdown(f"""
-            <div class='glass-card' style='padding:16px;'>
-
-                <style>
-                    .metric-label {{
-                        background-color: rgba(255, 215, 0, 0.2);  /* semi-transparent gold highlight */
-                        color: black !important;
-                        font-weight: 700 !important;
-                        font-size: 14px;
-                        padding: 4px 8px;
-                        border-radius: 6px;
-                        display: inline-block;
-                        margin-top: 6px;
-                    }}
-                    .metric-value {{
-                        color: #ffd700;  /* gold numbers */
-                        font-weight: 800;
-                        font-size: 16px;
-                        margin-bottom: 8px;
-                        display:block;
-                    }}
-                </style>
-
-                <p class='metric-label'>Training Method:</p>
-                <p class='metric-value'>{method}</p>
-
-                <p class='metric-label'>Gas Price ($/MMcfge):</p>
-                <p class='metric-value'>{gas_price}</p>
-
-                <p class='metric-label'>R² Score:</p>
-                <p class='metric-value'>{r2_admin:.3f}</p>
-
-                <p class='metric-label'>Predicted Production (MMcfge):</p>
-                <p class='metric-value'>{predicted_prod:.2f}</p>
-
-                <p class='metric-label'>Predicted Revenue ($):</p>
-                <p class='metric-value'>{revenue:,.2f}</p>
-
+            <div class='glass-card'>
+                <p class='metric-label'>Training Method:</p> {method}<br>
+                <p class='metric-label'>Gas Price ($/MMcfge):</p> {gas_price}<br>
+                <p class='metric-label'>R² Score:</p> {r2_admin:.3f}<br>
+                <p class='metric-label'>Predicted Production (MMcfge):</p> {predicted_prod:.2f}<br>
+                <p class='metric-label'>Predicted Revenue ($):</p> {revenue:,.2f}
             </div>
             """, unsafe_allow_html=True)
 
