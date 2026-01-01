@@ -1,9 +1,10 @@
-streamlit
+# Tell pip where to get the PyTorch CPU wheels
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch==2.1.0+cpu
-pandas
-numpy
-scikit-learn
-plotly
-scipy
-pykrige
-
+pandas>=2.1.0
+numpy>=1.27.0
+scikit-learn>=1.3.0
+plotly>=5.18.0
+scipy>=1.11.0
+pykrige>=1.7.4
+streamlit>=1.25.0
