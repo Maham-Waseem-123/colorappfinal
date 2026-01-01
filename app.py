@@ -83,6 +83,13 @@ div.stButton > button:hover {
     color: white; 
 }
 
+.metric-label {
+    color: white !important;      /* Title text white */
+    font-weight: 700 !important;  /* Bold */
+    margin: 0;
+    font-size: 14px;
+
+
 /* Sliders styling (prediction page kept yellow) */
 div.stSlider > label {
     color: white !important;
