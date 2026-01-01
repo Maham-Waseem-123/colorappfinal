@@ -1,7 +1,10 @@
-streamlit
+torch
+torchvision
+torchaudio
 pandas
 numpy
 scikit-learn
 plotly
 scipy
 pykrige
+streamlit
