@@ -583,6 +583,7 @@ elif page == "Economic Analysis":
 
 elif page == "Admin Model Training":
 
+    # Glassy page header
     st.markdown(
         "<div class='glass-card'><h1 style='text-align:center;'>Admin — Model Training & Revenue View</h1></div>",
         unsafe_allow_html=True
@@ -610,19 +611,33 @@ elif page == "Admin Model Training":
 
         with st.spinner("Training model..."):
 
+            # Train the model using your existing function
             model_admin, scaler_admin, cols_admin, r2_admin = train_model_by_method(df, method)
 
-            # pick first row for admin predicted value demo
+            # Pick first row for demo prediction
             sample = df[cols_admin].iloc[[0]]
             sample_scaled = scaler_admin.transform(sample)
-
             predicted_prod = model_admin.predict(sample_scaled)[0]
-
             revenue = predicted_prod * gas_price
 
             st.success("Training completed successfully")
 
+            # ------------------------------
+            # Display metrics inside white-text glass card
+            # ------------------------------
+            st.markdown(f"""
+            <div class='glass-card'>
+                <p class='metric-label'>Training Method:</p> {method}<br>
+                <p class='metric-label'>Gas Price ($/MMcfge):</p> {gas_price}<br>
+                <p class='metric-label'>R² Score:</p> {r2_admin:.3f}<br>
+                <p class='metric-label'>Predicted Production (MMcfge):</p> {predicted_prod:.2f}<br>
+                <p class='metric-label'>Predicted Revenue ($):</p> {revenue:,.2f}
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Optional: Keep st.metric version below if you want both
             st.metric("Model Selected", method)
             st.metric("R² Score", f"{r2_admin:.3f}")
             st.metric("Predicted Production (MMcfge)", f"{predicted_prod:.2f}")
             st.metric("Predicted Revenue ($)", f"{revenue:,.2f}")
+
