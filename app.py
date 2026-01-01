@@ -33,6 +33,17 @@ GLOBAL_CSS = """
   background-attachment: fixed;
 }
 
+/* ===== FORCE ALL INPUT LABELS TO WHITE ===== */
+label,
+div[data-testid="stSelectbox"] label,
+div[data-testid="stNumberInput"] label,
+div[data-testid="stSelectbox"] span,
+div[data-testid="stNumberInput"] span {
+    color: white !important;
+    font-weight: 700 !important;
+}
+
+
 /* Base text */
 body, .block-container, .stText, .stMarkdown, .stDataFrame, .stButton, .stSlider {
     color: white !important;
