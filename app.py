@@ -11,6 +11,9 @@ import numpy as np
 import time
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.neural_network import MLPRegressor
 from sklearn.model_selection import train_test_split
 import plotly.express as px
 
@@ -205,6 +208,55 @@ def train_model(df):
     return gbr, scaler, feature_cols, numeric_cols
 
 model, scaler, feature_cols, numeric_cols = train_model(df)
+
+def train_model_by_method(df, method):
+
+    target = "Production (MMcfge)"
+    feature_cols = df.drop(columns=["ID", target]).columns.tolist()
+
+    X = df[feature_cols]
+    y = df[target]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
+
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    if method == "Gradient Boosting (GBRT)":
+        model = GradientBoostingRegressor(
+            loss="absolute_error",
+            learning_rate=0.1,
+            n_estimators=600,
+            max_depth=1,
+            random_state=42
+        )
+
+    elif method == "Random Forest":
+        model = RandomForestRegressor(
+            n_estimators=400,
+            random_state=42
+        )
+
+    elif method == "Linear Regression":
+        model = LinearRegression()
+
+    elif method == "Neural Network (MLP)":
+        model = MLPRegressor(
+            hidden_layer_sizes=(64, 64),
+            activation="relu",
+            max_iter=2000,
+            random_state=42
+        )
+
+    model.fit(X_train, y_train)
+
+    r2 = model.score(X_test, y_test)
+    preds = model.predict(X_test)
+
+    return model, scaler, feature_cols, r2
 
 # ============================================
 # SIDEBAR NAVIGATION
@@ -527,3 +579,50 @@ elif page == "Economic Analysis":
     )
 
     st.plotly_chart(fig_rev, use_container_width=True)
+
+
+elif page == "Admin Model Training":
+
+    st.markdown(
+        "<div class='glass-card'><h1 style='text-align:center;'>Admin — Model Training & Revenue View</h1></div>",
+        unsafe_allow_html=True
+    )
+
+    st.write("Select model training method:")
+
+    method = st.selectbox(
+        "Training Method",
+        [
+            "Gradient Boosting (GBRT)",
+            "Random Forest",
+            "Linear Regression",
+            "Neural Network (MLP)"
+        ]
+    )
+
+    gas_price = st.number_input(
+        "Gas Price ($/MMcfge)",
+        value=5.0,
+        step=0.5
+    )
+
+    if st.button("Train Model & Evaluate"):
+
+        with st.spinner("Training model..."):
+
+            model_admin, scaler_admin, cols_admin, r2_admin = train_model_by_method(df, method)
+
+            # pick first row for admin predicted value demo
+            sample = df[cols_admin].iloc[[0]]
+            sample_scaled = scaler_admin.transform(sample)
+
+            predicted_prod = model_admin.predict(sample_scaled)[0]
+
+            revenue = predicted_prod * gas_price
+
+            st.success("Training completed successfully")
+
+            st.metric("Model Selected", method)
+            st.metric("R² Score", f"{r2_admin:.3f}")
+            st.metric("Predicted Production (MMcfge)", f"{predicted_prod:.2f}")
+            st.metric("Predicted Revenue ($)", f"{revenue:,.2f}")
