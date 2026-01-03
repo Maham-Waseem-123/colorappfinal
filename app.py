@@ -435,8 +435,15 @@ if page == "Reservoir Engineering Dashboard":
 # RESERVOIR PREDICTION PAGE
 # ============================================
 elif page == "Reservoir Prediction":
-    st.markdown("<div class='glass-card'><h1 style='text-align:center;'>Predict New Well Production</h1></div>", unsafe_allow_html=True)
-    st.markdown("<p class='small-muted' style='text-align:center;'>Adjust parameters and predict production</p>", unsafe_allow_html=True)
+
+    st.markdown(
+        "<div class='glass-card'><h1 style='text-align:center;'>Predict New Well Production</h1></div>",
+        unsafe_allow_html=True
+    )
+    st.markdown(
+        "<p class='small-muted' style='text-align:center;'>Adjust parameters and predict production</p>",
+        unsafe_allow_html=True
+    )
 
     # -----------------------------
     # FILTER FEATURES TO REMOVE _Stdev
@@ -447,15 +454,30 @@ elif page == "Reservoir Prediction":
 
     for col in filtered_features:
         col_values = df[col].dropna() if col in df.columns else pd.Series([0.0])
-        min_val, max_val, mean_val = float(col_values.min()), float(col_values.max()), float(col_values.mean())
+
+        min_val = float(col_values.min())
+        max_val = float(col_values.max())
+        mean_val = float(col_values.mean())
 
         if min_val == max_val:
             max_val = min_val + 1.0
 
         try:
-            input_data[col] = st.slider(col, min_value=min_val, max_value=max_val, value=mean_val, key=f"pred_{col}")
+            input_data[col] = st.slider(
+                col,
+                min_value=min_val,
+                max_value=max_val,
+                value=mean_val,
+                key=f"pred_{col}"
+            )
         except Exception:
-            input_data[col] = st.number_input(col, min_value=min_val, max_value=max_val, value=mean_val, key=f"pred_num_{col}")
+            input_data[col] = st.number_input(
+                col,
+                min_value=min_val,
+                max_value=max_val,
+                value=mean_val,
+                key=f"pred_num_{col}"
+            )
 
     # -----------------------------
     # PREDICT BUTTON
@@ -463,19 +485,30 @@ elif page == "Reservoir Prediction":
     if st.button("Predict Production"):
         with st.spinner("Predicting production..."):
             time.sleep(0.9)
+
             input_df = pd.DataFrame([input_data])
 
-            available_numeric = [c for c in numeric_cols if c in input_df.columns]
-            if available_numeric:
-                input_df[available_numeric] = scaler.transform(input_df[available_numeric])
+            # Ensure same feature order as training
+            input_df = input_df[feature_cols]
 
-            pred = model.predict(input_df)[0]
+            # Scale input
+            input_scaled = scaler.transform(input_df)
+
+            # Predict
+            pred = model.predict(input_scaled)[0]
             st.session_state.predicted_production = float(pred)
 
             st.markdown(
-                f"<div class='glass-card'><h2 style='color:#ffd700; text-align:center; font-weight:bold;'>Predicted Production: {pred:.2f} MMcfge</h2></div>",
+                f"""
+                <div class='glass-card'>
+                    <h2 style='color:#ffd700; text-align:center; font-weight:bold;'>
+                        Predicted Production: {pred:.2f} MMcfge
+                    </h2>
+                </div>
+                """,
                 unsafe_allow_html=True
             )
+
 
     # -----------------------------
     # PREDICTION HISTOGRAM (ONLY SHOWN ON THIS PAGE)
