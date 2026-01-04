@@ -304,7 +304,7 @@ PAGE_DESCRIPTIONS = {
     - Identifies the highest producing well
     - Displays key reservoir and completion parameters
     - Calculates revenue for the top well
-    - Shows production trends using binned feature analysis
+    - Shows production trends using feature analysis
     - Helps engineers understand which parameters impact production
     """,
 
@@ -515,6 +515,16 @@ elif page == "Reservoir Prediction":
         "<p class='small-muted' style='text-align:center;'>Adjust parameters and predict production</p>",
         unsafe_allow_html=True
     )
+        # ---------- PAGE DESCRIPTION ----------
+    st.markdown(
+        f"""
+        <div class='glass-card'>
+            {PAGE_DESCRIPTIONS[page]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
     # -----------------------------
     # FILTER FEATURES TO REMOVE _Stdev
@@ -620,6 +630,17 @@ elif page == "Economic Analysis":
 
     st.title("Economic Analysis")
 
+        # ---------- PAGE DESCRIPTION ----------
+    st.markdown(
+        f"""
+        <div class='glass-card'>
+            {PAGE_DESCRIPTIONS[page]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+
     # -----------------------------
     # COST PARAMETERS
     # -----------------------------
@@ -720,6 +741,17 @@ if page == "Admin Model Training":
         "<div class='glass-card'><h1 style='text-align:center;'>Admin — Model Training & Revenue View</h1></div>",
         unsafe_allow_html=True
     )
+
+        # ---------- PAGE DESCRIPTION ----------
+    st.markdown(
+        f"""
+        <div class='glass-card'>
+            {PAGE_DESCRIPTIONS[page]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
 
     method = st.selectbox(
         "Training Method",
