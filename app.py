@@ -341,21 +341,19 @@ PAGE_DESCRIPTIONS = {
     """
 }
 
-
-# ============================================
-# RESERVOIR ENGINEERING DASHBOARD
-# ============================================
-
 # ============================================
 # RESERVOIR ENGINEERING DASHBOARD
 # ============================================
 
 if page == "Reservoir Engineering Dashboard":
+
+    # ---------- PAGE TITLE ----------
     st.markdown(
-        "<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", 
+        "<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>",
         unsafe_allow_html=True
     )
 
+    # ---------- PAGE DESCRIPTION ----------
     st.markdown(
         f"""
         <div class='glass-card'>
@@ -365,22 +363,21 @@ if page == "Reservoir Engineering Dashboard":
         unsafe_allow_html=True
     )
 
-  
-
     # -----------------------------
     # FIND WELL WITH MAX PRODUCTION
     # -----------------------------
-    max_prod_idx = df['Production (MMcfge)'].idxmax()
+    max_prod_idx = df["Production (MMcfge)"].idxmax()
     top_well = df.loc[[max_prod_idx]]  # keep as DataFrame
 
     # -----------------------------
     # CALCULATE REVENUE FOR TOP WELL
     # -----------------------------
-    gas_price = st.session_state.get("gas_price", 5)  # fallback if not set
+    gas_price = st.session_state.get("gas_price", 5)
+    top_well = top_well.copy()
     top_well["Revenue"] = top_well["Production (MMcfge)"] * gas_price
 
     # -----------------------------
-    # 4x4 FEATURE CARDS INCLUDING REVENUE
+    # FEATURE LIST (4x4 GRID)
     # -----------------------------
     features_to_display = [
         "ID",
@@ -399,33 +396,51 @@ if page == "Reservoir Engineering Dashboard":
         "Surface Latitude",
         "Surface Longitude",
         "Production (MMcfge)",
-        "Revenue"  # Add Revenue here for 4x4 layout
+        "Revenue"
     ]
 
+    # -----------------------------
+    # DISPLAY FEATURE CARDS
+    # -----------------------------
     st.subheader("Top Well Feature Values")
-    rows = (len(features_to_display) + 3) // 4  # calculate number of rows for 4 columns
+
+    rows = (len(features_to_display) + 3) // 4
     for i in range(rows):
         cols = st.columns(4)
         for j in range(4):
             idx = i * 4 + j
             if idx >= len(features_to_display):
                 break
+
             feature = features_to_display[idx]
             if feature in top_well.columns:
                 val = top_well[feature].values[0]
-                # Format Revenue differently
+
                 if feature == "Revenue":
                     val_str = f"${val:,.2f}"
-                    card_color = "#ffd700"  # gold for revenue
+                    card_color = "#ffd700"
                     text_color = "#000000"
                 else:
                     val_str = f"{val:.2f}" if isinstance(val, (int, float)) else val
-                    card_color = "#1f2937"  # default dark card
+                    card_color = "#1f2937"
                     text_color = "#ffffff"
+
                 cols[j].markdown(
-                    f"<div class='glass-card' style='width:100%; height:100px; background-color:{card_color}; display:flex; align-items:center; justify-content:center;'>"
-                    f"<h4 style='text-align:center; color:{text_color}; font-weight:bold; margin:0;'>{feature}<br>{val_str}</h4>"
-                    f"</div>",
+                    f"""
+                    <div class='glass-card'
+                         style='height:100px;
+                                background-color:{card_color};
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;'>
+                        <h4 style='text-align:center;
+                                   color:{text_color};
+                                   font-weight:700;
+                                   margin:0;'>
+                            {feature}<br>{val_str}
+                        </h4>
+                    </div>
+                    """,
                     unsafe_allow_html=True
                 )
 
@@ -434,7 +449,6 @@ if page == "Reservoir Engineering Dashboard":
     # -----------------------------
     st.subheader("Overall Reservoir Analysis")
 
-    hover_cols = ["ID"]
     features_to_plot = [
         "Porosity",
         "Additive per foot (bbls)",
@@ -443,51 +457,50 @@ if page == "Reservoir Engineering Dashboard":
     ]
 
     # -----------------------------
-    # FUNCTION TO PLOT Binned LINE CHARTS
+    # BINNED LINE PLOT FUNCTION
     # -----------------------------
-    def make_binned_lineplot(df, xcol, bins=10):
-        df = df.copy()
-        df['bin'] = pd.cut(df[xcol], bins=bins)
-        binned_df = df.groupby('bin', as_index=False)['Production (MMcfge)'].mean()
-        binned_df['bin_center'] = binned_df['bin'].apply(lambda x: x.mid)
-        binned_df = binned_df.dropna(subset=['Production (MMcfge)'])
-        binned_df = binned_df.sort_values("bin_center")
+    def make_binned_lineplot(data, xcol, bins=10):
+        temp = data.copy()
+        temp["bin"] = pd.cut(temp[xcol], bins=bins)
+        grouped = temp.groupby("bin", as_index=False)["Production (MMcfge)"].mean()
+        grouped["bin_center"] = grouped["bin"].apply(lambda x: x.mid)
+        grouped = grouped.dropna().sort_values("bin_center")
 
         fig = px.line(
-            binned_df,
-            x='bin_center',
-            y='Production (MMcfge)',
-            labels={'bin_center': xcol, 'Production (MMcfge)': 'Production (MMcfge)'},
+            grouped,
+            x="bin_center",
+            y="Production (MMcfge)",
             markers=True,
-            title=f"{xcol}"  # Only show the feature name as title
+            title=xcol
         )
 
-        fig.update_traces(line=dict(color='yellow', width=4), marker=dict(color='yellow', size=8))
+        fig.update_traces(line=dict(color="yellow", width=4),
+                          marker=dict(color="yellow", size=8))
+
         fig.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='white', family='Segoe UI', size=12),
-            xaxis=dict(title=dict(text=xcol, font=dict(color='white', size=13)), showgrid=False),
-            yaxis=dict(title=dict(text='Production (MMcfge)', font=dict(color='white', size=13)), showgrid=False),
-            title=dict(font=dict(color='white', size=16))
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(0,0,0,0)",
+            font=dict(color="white"),
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=False)
         )
 
         st.plotly_chart(fig, use_container_width=True)
 
     # -----------------------------
-    # PLOT BINS FOR SELECTED FEATURES
+    # FEATURE PLOTS
     # -----------------------------
     for col in features_to_plot:
         if col in df.columns:
-            make_binned_lineplot(df, col, bins=10)
+            make_binned_lineplot(df, col)
 
     # -----------------------------
-    # DEPTH VS PRODUCTION (FULL DATA)
+    # DEPTH VS PRODUCTION
     # -----------------------------
     if "Depth (feet)" in df.columns:
-        make_binned_lineplot(df, "Depth (feet)", bins=10)
+        make_binned_lineplot(df, "Depth (feet)")
     else:
-        st.info("Depth (feet) column not found in data.", icon="ℹ️")
+        st.info("Depth (feet) column not found.", icon="ℹ️")
 
 # ============================================
 # RESERVOIR PREDICTION PAGE
