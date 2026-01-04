@@ -295,6 +295,53 @@ page = st.sidebar.radio(
     format_func=lambda x: "📊 " + x if x == "Reservoir Engineering Dashboard" else ("🛢️ " + x if x == "Reservoir Prediction" else "💰 " + x)
 )
 
+PAGE_DESCRIPTIONS = {
+    "Reservoir Engineering Dashboard": """
+    **Purpose:**  
+    This page provides an overview of reservoir performance using historical well data.
+
+    **Key Functions:**
+    - Identifies the highest producing well
+    - Displays key reservoir and completion parameters
+    - Calculates revenue for the top well
+    - Shows production trends using binned feature analysis
+    - Helps engineers understand which parameters impact production
+    """,
+
+    "Reservoir Prediction": """
+    **Purpose:**  
+    This page predicts production for a new well using machine learning.
+
+    **Key Functions:**
+    - Allows users to adjust geological and completion parameters
+    - Uses a trained Gradient Boosting model
+    - Predicts expected production (MMcfge)
+    - Compares predicted well against existing wells
+    """,
+
+    "Economic Analysis": """
+    **Purpose:**  
+    This page evaluates the economic performance of wells.
+
+    **Key Functions:**
+    - Calculates CAPEX and OPEX
+    - Estimates revenue using gas price
+    - Computes profit for existing and predicted wells
+    - Visualizes revenue distribution
+    """,
+
+    "Admin Model Training": """
+    **Purpose:**  
+    This page is used for model experimentation and validation.
+
+    **Key Functions:**
+    - Trains different ML models (GBRT, RF, LR, MLP)
+    - Evaluates model performance using R² score
+    - Estimates production and revenue for a sample well
+    """
+}
+
+
 # ============================================
 # RESERVOIR ENGINEERING DASHBOARD
 # ============================================
@@ -308,6 +355,16 @@ if page == "Reservoir Engineering Dashboard":
         "<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", 
         unsafe_allow_html=True
     )
+  st.markdown(
+    f"""
+    <div class='glass-card'>
+        {PAGE_DESCRIPTIONS[page]}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+  
 
     # -----------------------------
     # FIND WELL WITH MAX PRODUCTION
