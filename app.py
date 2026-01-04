@@ -355,14 +355,15 @@ if page == "Reservoir Engineering Dashboard":
         "<div class='glass-card'><h1 style='text-align:center;'>Reservoir Engineering Dashboard</h1></div>", 
         unsafe_allow_html=True
     )
-  st.markdown(
-    f"""
-    <div class='glass-card'>
-        {PAGE_DESCRIPTIONS[page]}
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+
+    st.markdown(
+        f"""
+        <div class='glass-card'>
+            {PAGE_DESCRIPTIONS[page]}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
   
 
